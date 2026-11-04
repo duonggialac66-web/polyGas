@@ -1,0 +1,45 @@
+# Compiled class file
+target/
+*.class
+
+# Log files
+*.log
+
+# Package Files #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Backup and temp files
+*.bak
+*.bak.*
+*.tmp
+*~
+
+# Eclipse / STS project files (specific to local machine environment)
+.settings/
+.project
+.classpath
+.factorypath
+# Root dummy folder
+/poly/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+out/
+
+# Visual Studio Code
+.vscode/
+
+# OS generated files
+Thumbs.db
+.DS_Store
+
+# Temporary scratch folder
+scratch/
