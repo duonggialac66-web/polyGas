@@ -14,6 +14,7 @@ import poly.duantn.entity.enums.UserStatus;
 import poly.duantn.repository.*;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -32,7 +33,7 @@ public class DataInitializer implements CommandLineRunner {
         seedInventories();
         seedSalaryConfigs();
         seedSalaryFormula();
-        log.info(">>> [OriginGas Enterprise] Đã nạp thành công toàn bộ dữ liệu nền tảng vào CSDL!");
+        log.info(">>> [OriginGas Enterprise] Đã nạp thành công toàn bộ dữ liệu nền tảng với Khóa Ngoại chuẩn vào CSDL!");
     }
 
     private void seedUsers() {
@@ -95,15 +96,19 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedSalaryConfigItem(String type, double commission, Integer threshold, Double bonus) {
-        if (!salaryConfigRepository.existsByContainerType(type)) {
-            SalaryConfig config = SalaryConfig.builder()
-                    .containerType(type)
-                    .commissionPerUnit(commission)
-                    .milestoneBonusThreshold(threshold)
-                    .milestoneBonusAmount(bonus)
-                    .build();
-            salaryConfigRepository.save(config);
-            log.info("-> Đã nạp cấu hình hoa hồng cho: {}", type);
+        Optional<Inventory> optInv = inventoryRepository.findByContainerType(type);
+        if (optInv.isPresent()) {
+            Inventory inv = optInv.get();
+            if (!salaryConfigRepository.existsByInventoryId(inv.getId())) {
+                SalaryConfig config = SalaryConfig.builder()
+                        .inventory(inv)
+                        .commissionPerUnit(commission)
+                        .milestoneBonusThreshold(threshold)
+                        .milestoneBonusAmount(bonus)
+                        .build();
+                salaryConfigRepository.save(config);
+                log.info("-> Đã nạp cấu hình hoa hồng liên kết khóa ngoại với kho cho: {}", type);
+            }
         }
     }
 

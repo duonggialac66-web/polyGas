@@ -40,3 +40,4 @@ public interface InventoryRepository extends JpaRepository<Inventory, UUID> {
     @Query("SELECT i FROM Inventory i WHERE i.fullQuantity <= i.warningThreshold")
     List<Inventory> findLowStockInventories();
 }
+

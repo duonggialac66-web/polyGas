@@ -25,6 +25,14 @@ public class MonthlySalaryInput {
     @JoinColumn(name = "employee_id", nullable = false)
     private User employee;
 
+    /**
+     * Khóa ngoại liên kết tới công thức SpEL được áp dụng để tính lương cho tháng này.
+     * Đảm bảo tính minh bạch, lưu vết lịch sử (Audit Trail) khi công thức lương thay đổi theo năm.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "salary_formula_id")
+    private SalaryFormula salaryFormula;
+
     @Column(name = "month", nullable = false, length = 7)
     private String month;
 

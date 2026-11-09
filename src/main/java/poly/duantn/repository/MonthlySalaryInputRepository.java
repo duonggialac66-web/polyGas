@@ -26,3 +26,4 @@ public interface MonthlySalaryInputRepository extends JpaRepository<MonthlySalar
      */
     boolean existsByEmployeeIdAndMonth(UUID employeeId, String month);
 }
+

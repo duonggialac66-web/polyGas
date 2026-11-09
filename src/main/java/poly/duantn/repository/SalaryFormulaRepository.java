@@ -21,3 +21,4 @@ public interface SalaryFormulaRepository extends JpaRepository<SalaryFormula, UU
      */
     List<SalaryFormula> findByOrderByEffectiveDateDesc();
 }
+

@@ -19,8 +19,14 @@ public class SalaryConfig {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "container_type", nullable = false, unique = true, length = 100)
-    private String containerType;
+    /**
+     * Khóa ngoại chuẩn liên kết trực tiếp tới loại bình gas trong kho
+     * Ràng buộc duy nhất unique = true để đảm bảo mỗi loại bình chỉ có đúng 1 cấu
+     * hình hoa hồng
+     */
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "inventory_id", nullable = false, unique = true)
+    private Inventory inventory;
 
     @Column(name = "commission_per_unit", nullable = false)
     @Builder.Default
@@ -48,4 +54,3 @@ public class SalaryConfig {
         this.updatedAt = LocalDateTime.now();
     }
 }
-

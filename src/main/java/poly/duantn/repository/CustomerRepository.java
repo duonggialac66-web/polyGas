@@ -36,3 +36,4 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
      */
     List<Customer> findByPhoneContainingOrAddressContainingIgnoreCase(String phone, String address);
 }
+

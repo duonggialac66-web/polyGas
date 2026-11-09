@@ -11,12 +11,17 @@ import java.util.UUID;
 public interface SalaryConfigRepository extends JpaRepository<SalaryConfig, UUID> {
 
     /**
-     * Tìm cấu hình đơn giá hoa hồng theo loại bình gas
+     * Tìm cấu hình hoa hồng theo khóa ngoại inventory_id
      */
-    Optional<SalaryConfig> findByContainerType(String containerType);
+    Optional<SalaryConfig> findByInventoryId(UUID inventoryId);
+
+    /**
+     * Tìm cấu hình hoa hồng theo tên loại bình thông qua khóa ngoại liên kết
+     */
+    Optional<SalaryConfig> findByInventoryContainerType(String containerType);
 
     /**
      * Kiểm tra loại bình đã có cấu hình hoa hồng chưa
      */
-    boolean existsByContainerType(String containerType);
+    boolean existsByInventoryId(UUID inventoryId);
 }

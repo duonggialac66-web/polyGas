@@ -19,6 +19,7 @@ target/
 *.bak.*
 *.tmp
 *~
+~$*
 
 # Eclipse / STS project files (specific to local machine environment)
 .settings/

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sơ đồ Thiết kế Hệ thống - OriginGas Enterprise</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0F172A; color: #F8FAFC; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; background: #1E293B; padding: 16px 24px; border-radius: 12px; border: 1px solid #334155; }
+        .title h1 { font-size: 20px; color: #38BDF8; font-weight: 700; }
+        .title p { font-size: 13px; color: #94A3B8; margin-top: 4px; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .tab-btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 13.5px; cursor: pointer; border: 1px solid #334155; background: #1E293B; color: #94A3B8; transition: all 0.2s; }
+        .tab-btn.active { background: #2563EB; color: white; border-color: #3B82F6; }
+        .tab-btn:hover:not(.active) { background: #334155; color: white; }
+        .actions { display: flex; gap: 12px; }
+        .btn { padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+        .btn-primary { background: #2563EB; color: white; }
+        .btn-primary:hover { background: #1D4ED8; }
+        .btn-secondary { background: #059669; color: white; }
+        .btn-secondary:hover { background: #047857; }
+        .diagram-container { background: #FFFFFF; border-radius: 12px; overflow: auto; padding: 24px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); text-align: center; }
+        #svgContainer svg { max-width: 100%; height: auto; border-radius: 8px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">
+            <h1 id="mainTitle">🔥 ORIGINGAS ENTERPRISE — SƠ ĐỒ THIẾT KẾ HỆ THỐNG</h1>
+            <p>Kiến trúc: Frontend – Backend Separation (SPA + RESTful API) • Thiết kế: Dương Gia Lạc (Leader)</p>
+        </div>
+        <div class="actions">
+            <button class="btn btn-secondary" onclick="downloadPNG()">💾 Tải ảnh PNG Siêu nét (2x)</button>
+            <a id="svgDownloadLink" href="Architecture_Decoupled_SPA_REST.svg" download="Architecture_Decoupled_SPA_REST.svg" class="btn btn-primary">📥 Tải file Vector SVG gốc</a>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+        <button class="tab-btn active" id="tabArch" onclick="switchDiagram('arch')">🏛️ 1. Sơ đồ Kiến trúc Tách biệt (SPA + RESTful API)</button>
+        <button class="tab-btn" id="tabErd" onclick="switchDiagram('erd')">🗄️ 2. Sơ đồ Thực thể Quan hệ CSDL (ERD 3NF)</button>
+    </div>
+
+    <div class="diagram-container">
+        <div id="svgContainer">Đang tải biểu đồ...</div>
+    </div>
+
+    <canvas id="exportCanvas" style="display:none;"></canvas>
+
+    <script>
+        let currentMode = 'arch'; // 'arch' or 'erd'
+
+        const diagrams = {
+            arch: {
+                title: '🔥 ORIGINGAS ENTERPRISE — KIẾN TRÚC TÁCH BIỆT (SPA + RESTFUL WEB API)',
+                svgUrl: 'Architecture_Decoupled_SPA_REST.svg',
+                pngName: 'Architecture_Decoupled_OriginGas.png',
+                svgName: 'Architecture_Decoupled_SPA_REST.svg',
+                w: 1560,
+                h: 920
+            },
+            erd: {
+                title: '🔥 ORIGINGAS ENTERPRISE — SƠ ĐỒ THỰC THỂ QUAN HỆ CƠ SỞ DỮ LIỆU (ERD 3NF)',
+                svgUrl: 'ERD_OriginGas_Enterprise.svg',
+                pngName: 'ERD_OriginGas_Enterprise.png',
+                svgName: 'ERD_OriginGas_Enterprise.svg',
+                w: 1420,
+                h: 1020
+            }
+        };
+
+        function switchDiagram(mode) {
+            currentMode = mode;
+            document.getElementById('tabArch').className = mode === 'arch' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('tabErd').className = mode === 'erd' ? 'tab-btn active' : 'tab-btn';
+
+            const cfg = diagrams[mode];
+            document.getElementById('mainTitle').innerText = cfg.title;
+            const svgLink = document.getElementById('svgDownloadLink');
+            svgLink.href = cfg.svgUrl;
+            svgLink.download = cfg.svgName;
+
+            fetch(cfg.svgUrl)
+                .then(res => res.text())
+                .then(svgText => {
+                    document.getElementById('svgContainer').innerHTML = svgText;
+                })
+                .catch(() => {
+                    document.getElementById('svgContainer').innerHTML = '<img src="' + cfg.svgUrl + '" style="max-width:100%"/>';
+                });
+        }
+
+        // Initialize on load
+        switchDiagram('arch');
+
+        function downloadPNG() {
+            const svgElement = document.querySelector('#svgContainer svg');
+            if (!svgElement) {
+                alert('Đang tải biểu đồ, vui lòng thử lại sau 1 giây.');
+                return;
+            }
+
+            const cfg = diagrams[currentMode];
+            const svgString = new XMLSerializer().serializeToString(svgElement);
+            const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const URL = window.URL || window.webkitURL || window;
+            const blobURL = URL.createObjectURL(svgBlob);
+
+            const image = new Image();
+            image.onload = function () {
+                const canvas = document.getElementById('exportCanvas');
+                const scale = 2; // 2x Super Sample resolution for ultra-sharp print quality
+                canvas.width = cfg.w * scale;
+                canvas.height = cfg.h * scale;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+                const pngURL = canvas.toDataURL('image/png');
+                const downloadLink = document.createElement('a');
+                downloadLink.download = cfg.pngName;
+                downloadLink.href = pngURL;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+                URL.revokeObjectURL(blobURL);
+            };
+            image.src = blobURL;
+        }
+    </script>
+</body>
+</html>

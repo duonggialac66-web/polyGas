@@ -36,3 +36,4 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
     Double sumAmountByEmployeeAndDate(@Param("employeeId") UUID employeeId,
                                       @Param("expenseDate") LocalDate expenseDate);
 }
+

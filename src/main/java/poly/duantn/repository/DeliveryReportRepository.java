@@ -30,6 +30,11 @@ public interface DeliveryReportRepository extends JpaRepository<DeliveryReport, 
     List<DeliveryReport> findByCustomerIdAndPaymentStatus(UUID customerId, PaymentStatus paymentStatus);
 
     /**
+     * Lọc báo cáo giao hàng theo loại bình trong kho qua khóa ngoại inventory_id
+     */
+    List<DeliveryReport> findByInventoryId(UUID inventoryId);
+
+    /**
      * Lọc báo cáo giao hàng trong khoảng thời gian
      */
     List<DeliveryReport> findByReportDateBetween(LocalDate startDate, LocalDate endDate);
@@ -48,11 +53,11 @@ public interface DeliveryReportRepository extends JpaRepository<DeliveryReport, 
                                              @Param("reportDate") LocalDate reportDate);
 
     /**
-     * Đếm tổng số bình gas giao thành công theo loại bình của nhân viên trong tháng (dùng tính hoa hồng)
+     * Đếm tổng số bình gas giao thành công theo loại bình của nhân viên trong tháng qua khóa ngoại d.inventory
      */
     @Query("SELECT COALESCE(SUM(d.quantity), 0) FROM DeliveryReport d " +
            "WHERE d.employee.id = :employeeId " +
-           "AND d.containerType = :containerType " +
+           "AND d.inventory.containerType = :containerType " +
            "AND d.reportDate >= :startDate AND d.reportDate <= :endDate")
     Integer sumQuantityByEmployeeAndContainerTypeAndDateRange(@Param("employeeId") UUID employeeId,
                                                              @Param("containerType") String containerType,

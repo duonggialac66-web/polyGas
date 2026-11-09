@@ -10,8 +10,9 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "delivery_reports", indexes = {
-    @Index(name = "IX_DeliveryReports_Employee_Date", columnList = "employee_id, report_date"),
-    @Index(name = "IX_DeliveryReports_PaymentStatus", columnList = "payment_status")
+        @Index(name = "IX_DeliveryReports_Employee_Date", columnList = "employee_id, report_date"),
+        @Index(name = "IX_DeliveryReports_PaymentStatus", columnList = "payment_status"),
+        @Index(name = "IX_DeliveryReports_Inventory", columnList = "inventory_id")
 })
 @Data
 @NoArgsConstructor
@@ -24,6 +25,9 @@ public class DeliveryReport {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
+    /**
+     * Khóa ngoại liên kết tới nhân viên lập đơn giao gas
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
     private User employee;
@@ -31,6 +35,9 @@ public class DeliveryReport {
     @Column(name = "report_date", nullable = false)
     private LocalDate reportDate;
 
+    /**
+     * Khóa ngoại liên kết tới khách hàng (cho phép null nếu là khách vãng lai)
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
     private Customer customer;
@@ -38,11 +45,15 @@ public class DeliveryReport {
     @Column(name = "customer_name", nullable = false)
     private String customerName;
 
+    /**
+     * Khóa ngoại chuẩn liên kết trực tiếp tới loại bình gas trong kho
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "inventory_id", nullable = false)
+    private Inventory inventory;
+
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
-
-    @Column(name = "container_type", nullable = false, length = 100)
-    private String containerType;
 
     @Column(name = "unit_price", nullable = false)
     @Builder.Default
@@ -102,4 +113,3 @@ public class DeliveryReport {
         }
     }
 }
-
