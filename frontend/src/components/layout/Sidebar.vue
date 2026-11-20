@@ -13,16 +13,18 @@
 
     <!-- Navigation -->
     <nav class="sidebar-nav">
-      <div class="nav-section-title">Hệ Thống Chính</div>
-      
-      <router-link to="/dashboard" class="nav-link">
-        <span class="nav-icon">📊</span>
-        <span>Tổng Quan</span>
-      </router-link>
+      <div class="nav-section-title">Nhân Viên Giao Hàng</div>
 
       <router-link to="/employment" class="nav-link">
-        <span class="nav-icon">👥</span>
-        <span>Quản Lý Nhân Viên</span>
+        <span class="nav-icon">🚚</span>
+        <span>Báo Cáo Giao Gas</span>
+      </router-link>
+
+      <div class="nav-section-title">Quản Lý & Thống Kê</div>
+
+      <router-link to="/dashboard" class="nav-link">
+        <span class="nav-icon">📊</span>
+        <span>Tổng Quan Hệ Thống</span>
       </router-link>
 
       <div class="nav-section-title">Nghiệp Vụ Gas</div>

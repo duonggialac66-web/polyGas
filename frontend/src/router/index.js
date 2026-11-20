@@ -12,7 +12,7 @@ const routes = [
     name: 'Employment',
     component: EmploymentView,
     meta: {
-      title: 'Quản Lý Nhân Viên - OriginGas',
+      title: 'Báo Cáo Giao Gas Hôm Nay - OriginGas',
       requiresAuth: true
     }
   },

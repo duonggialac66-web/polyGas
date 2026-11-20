@@ -1,15 +1,24 @@
 <template>
-  <AppLayout :is-backend-connected="!isMockData" @refresh="fetchEmployees">
+  <AppLayout :is-backend-connected="!isMockData" @refresh="fetchReports">
     <!-- Page Header -->
     <div class="page-header">
       <div class="page-title">
-        <h2>👥 Quản Lý Nhân Viên (Employment)</h2>
-        <p>Quản lý hồ sơ nhân sự, tài khoản hệ thống, chức vụ và mức lương cơ sở của OriginGas</p>
+        <h2>🚚 Báo Cáo Giao Gas Hôm Nay</h2>
+        <p>Nhật ký ghi nhận số lượng bình giao, giá bán và theo dõi công nợ khách hàng trong ngày của nhân viên</p>
       </div>
-      <div>
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <!-- Date Selector -->
+        <input 
+          type="date" 
+          v-model="selectedDate" 
+          @change="fetchReports"
+          class="form-control" 
+          style="width: auto; font-weight: 600;"
+        />
+
         <button class="btn btn-primary" @click="openCreateModal">
           <span>➕</span>
-          <span>Thêm Nhân Viên Mới</span>
+          <span>Nhập Phiếu Giao Gas</span>
         </button>
       </div>
     </div>
@@ -22,193 +31,183 @@
       <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #92400e;">
         <span>ℹ️</span>
         <span>
-          <strong>Lưu ý:</strong> Backend Spring Boot (cổng 8080) hiện chưa kết nối. Giao diện đang hiển thị dữ liệu mẫu để thử nghiệm. Khi khởi động Backend, dữ liệu thực sẽ tự động cập nhật!
+          <strong>Lưu ý:</strong> Backend Spring Boot (cổng 8080) chưa kết nối. Giao diện đang dùng Mock Data để bạn thử nghiệm đầy đủ tính năng tạo đơn, tính tiền, đổi nợ/thanh toán.
         </span>
       </div>
-      <button class="btn btn-sm btn-outline" @click="fetchEmployees">Thử kết nối lại</button>
+      <button class="btn btn-sm btn-outline" @click="fetchReports">Thử kết nối lại</button>
     </div>
 
-    <!-- Stats Grid -->
+    <!-- Stats Grid (Tổng hợp ca làm việc hôm nay) -->
     <div class="stats-grid">
+      <!-- 1. Total Cylinders Delivered -->
       <div class="stat-card">
-        <div class="stat-icon primary">👥</div>
+        <div class="stat-icon primary">🛢️</div>
         <div class="stat-info">
-          <p>Tổng Nhân Sự</p>
-          <h3>{{ stats.total }}</h3>
+          <p>Tổng Bình Giao Hôm Nay</p>
+          <h3>{{ stats.totalQuantity }} bình</h3>
         </div>
       </div>
 
+      <!-- 2. Total Revenue -->
+      <div class="stat-card">
+        <div class="stat-icon info">💵</div>
+        <div class="stat-info">
+          <p>Tổng Tiền Bán Được</p>
+          <h3>{{ formatCurrency(stats.totalAmount) }}</h3>
+        </div>
+      </div>
+
+      <!-- 3. Paid Amount -->
       <div class="stat-card">
         <div class="stat-icon success">✅</div>
         <div class="stat-info">
-          <p>Đang Hoạt Động</p>
-          <h3>{{ stats.active }}</h3>
+          <p>Đã Thu Tiền (Thanh Toán)</p>
+          <h3>{{ formatCurrency(stats.paidAmount) }}</h3>
         </div>
       </div>
 
+      <!-- 4. Debt Amount -->
       <div class="stat-card">
-        <div class="stat-icon warning">⏸️</div>
+        <div class="stat-icon warning">⚠️</div>
         <div class="stat-info">
-          <p>Tạm Ngừng / Khóa</p>
-          <h3>{{ stats.inactive }}</h3>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon danger">💵</div>
-        <div class="stat-info">
-          <p>Tổng Quỹ Lương Cơ Sở</p>
-          <h3>{{ formatCurrency(stats.totalSalary) }}</h3>
+          <p>Khách Còn Nợ (Ghi Nợ)</p>
+          <h3 style="color: var(--danger);">{{ formatCurrency(stats.debtAmount) }}</h3>
         </div>
       </div>
     </div>
 
-    <!-- Table Content Card -->
+    <!-- Main Content Card -->
     <div class="content-card">
       <!-- Toolbar Filter & Search -->
       <div class="card-toolbar">
-        <!-- Search Input -->
         <div class="search-input-group">
           <span class="search-icon">🔍</span>
           <input 
             type="text" 
-            v-model="filters.keyword" 
-            @input="handleSearchDebounce"
-            placeholder="Tìm theo tên, username, số ĐT..."
+            v-model="searchKeyword" 
+            placeholder="Tìm theo tên khách hàng, ghi chú..."
           />
         </div>
 
-        <!-- Filter Selects -->
         <div class="toolbar-filters">
-          <!-- Role Filter -->
-          <select v-model="filters.role" @change="fetchEmployees" class="select-filter">
-            <option value="">-- Tất cả chức vụ --</option>
-            <option value="ADMIN">Quản Trị Viên (ADMIN)</option>
-            <option value="EMPLOYEE">Nhân Viên Giao Hàng (EMPLOYEE)</option>
-          </select>
-
-          <!-- Status Filter -->
-          <select v-model="filters.status" @change="fetchEmployees" class="select-filter">
+          <!-- Filter by Payment Status -->
+          <select v-model="filterStatus" class="select-filter">
             <option value="">-- Tất cả trạng thái --</option>
-            <option value="ACTIVE">Đang hoạt động</option>
-            <option value="INACTIVE">Đã tạm khóa</option>
+            <option value="PAID">Đã thanh toán</option>
+            <option value="DEBT">Ghi nợ</option>
           </select>
 
-          <!-- Clear Filters -->
-          <button 
-            v-if="filters.keyword || filters.role || filters.status" 
-            class="btn btn-outline btn-sm"
-            @click="resetFilters"
-            title="Xóa bộ lọc"
-          >
-            Reset bộ lọc
-          </button>
+          <!-- Filter by Container Type -->
+          <select v-model="filterContainer" class="select-filter">
+            <option value="">-- Tất cả loại bình --</option>
+            <option v-for="g in GAS_TYPES" :key="g.type" :value="g.type">
+              {{ g.type }}
+            </option>
+          </select>
         </div>
       </div>
 
       <!-- Loading State -->
       <div v-if="loading" class="empty-state">
         <div class="loading-spinner"></div>
-        <p style="margin-top: 0.75rem; font-size: 0.9rem;">Đang tải danh sách nhân viên...</p>
+        <p style="margin-top: 0.75rem; font-size: 0.9rem;">Đang tải danh sách giao gas...</p>
       </div>
 
       <!-- Empty State -->
-      <div v-else-if="employees.length === 0" class="empty-state">
-        <div class="empty-icon">📭</div>
-        <h4 style="font-weight: 700; color: #334155;">Không tìm thấy nhân viên nào</h4>
-        <p style="font-size: 0.85rem; margin-top: 0.25rem;">Hãy thử tìm kiếm với từ khóa khác hoặc tạo nhân viên mới</p>
+      <div v-else-if="filteredReports.length === 0" class="empty-state">
+        <div class="empty-icon">📝</div>
+        <h4 style="font-weight: 700; color: #334155;">Chưa có phiếu giao gas nào hôm nay</h4>
+        <p style="font-size: 0.85rem; margin-top: 0.25rem;">Hãy bấm nút <strong>"Nhập Phiếu Giao Gas"</strong> để báo cáo chuyến giao đầu tiên trong ngày!</p>
+        <button class="btn btn-primary" style="margin-top: 1rem;" @click="openCreateModal">
+          ➕ Nhập Phiếu Đầu Tiên
+        </button>
       </div>
 
-      <!-- Table -->
+      <!-- Table View -->
       <div v-else class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
-              <th>Nhân Viên</th>
-              <th>Số Điện Thoại</th>
-              <th>Chức Vụ / Vai Trò</th>
-              <th>Ngày Vào Làm</th>
-              <th>Lương Cơ Sở</th>
-              <th>Trạng Thái</th>
-              <th style="text-align: right;">Hành Động</th>
+              <th>Khách Hàng</th>
+              <th>Loại Bình Gas</th>
+              <th style="text-align: center;">Số Lượng</th>
+              <th style="text-align: right;">Đơn Giá</th>
+              <th style="text-align: right;">Thành Tiền</th>
+              <th style="text-align: center;">Trạng Thái</th>
+              <th>Ghi Chú</th>
+              <th style="text-align: right;">Thao Tác</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="emp in employees" :key="emp.id">
-              <!-- Name & Username -->
+            <tr v-for="item in filteredReports" :key="item.id">
+              <!-- Customer Name -->
               <td>
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                  <div class="user-avatar-sm" style="font-size: 0.85rem; background: #e0f2fe; color: #0284c7;">
-                    {{ getInitials(emp.name) }}
-                  </div>
-                  <div>
-                    <div style="font-weight: 700; color: #0f172a;">{{ emp.name }}</div>
-                    <div style="font-size: 0.75rem; color: #64748b;">@{{ emp.username }}</div>
-                  </div>
+                <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">
+                  {{ item.customerName }}
+                </div>
+                <div style="font-size: 0.75rem; color: #64748b;">
+                  Người lập: {{ item.employeeName || 'Nhân viên giao' }}
                 </div>
               </td>
 
-              <!-- Phone -->
+              <!-- Gas Container Type -->
               <td>
-                <span style="font-weight: 500; color: #334155;">
-                  {{ emp.phone || '—' }}
+                <span class="badge" :style="getContainerBadgeStyle(item.containerType)">
+                  🛢️ {{ item.containerType }}
                 </span>
               </td>
 
-              <!-- Role -->
-              <td>
-                <span :class="['badge', emp.role === 'ADMIN' ? 'badge-admin' : 'badge-employee']">
-                  {{ emp.role === 'ADMIN' ? '👑 Quản Trị' : '🚚 Giao Hàng' }}
+              <!-- Quantity -->
+              <td style="text-align: center;">
+                <span style="font-weight: 700; font-size: 1rem; color: var(--primary);">
+                  {{ item.quantity }}
                 </span>
               </td>
 
-              <!-- Start Date -->
-              <td>
-                <span style="color: #64748b; font-size: 0.85rem;">
-                  {{ formatDate(emp.startDate) }}
-                </span>
+              <!-- Unit Price -->
+              <td style="text-align: right; color: #475569; font-weight: 500;">
+                {{ formatCurrency(item.unitPrice) }}
               </td>
 
-              <!-- Base Salary -->
-              <td>
-                <span style="font-weight: 700; color: #0f172a;">
-                  {{ formatCurrency(emp.baseSalary) }}
-                </span>
+              <!-- Total Amount -->
+              <td style="text-align: right; font-weight: 800; font-size: 1rem; color: #0f172a;">
+                {{ formatCurrency(item.total) }}
               </td>
 
-              <!-- Status -->
+              <!-- Payment Status (Click to toggle) -->
+              <td style="text-align: center;">
+                <button 
+                  :class="['badge', item.paymentStatus === 'PAID' ? 'badge-active' : 'badge-inactive']"
+                  style="cursor: pointer; border: none; font-size: 0.8rem; padding: 0.35rem 0.75rem;"
+                  :title="item.paymentStatus === 'PAID' ? 'Bấm để chuyển sang Nợ' : 'Bấm để đánh dấu Đã thanh toán'"
+                  @click="handleTogglePayment(item)"
+                >
+                  <span v-if="item.paymentStatus === 'PAID'">✅ Đã thanh toán</span>
+                  <span v-else>⚠️ Ghi nợ</span>
+                </button>
+              </td>
+
+              <!-- Notes -->
               <td>
-                <span :class="['badge', emp.status === 'ACTIVE' ? 'badge-active' : 'badge-inactive']">
-                  {{ emp.status === 'ACTIVE' ? '● Hoạt Động' : '● Đã Khóa' }}
+                <span style="color: #64748b; font-size: 0.85rem; font-style: italic;">
+                  {{ item.notes || '—' }}
                 </span>
               </td>
 
               <!-- Actions -->
               <td style="text-align: right;">
                 <div style="display: inline-flex; gap: 0.35rem;">
-                  <!-- Edit Button -->
                   <button 
                     class="btn btn-outline btn-sm" 
-                    title="Chỉnh sửa thông tin"
-                    @click="openEditModal(emp)"
+                    title="Chỉnh sửa đơn này"
+                    @click="openEditModal(item)"
                   >
                     ✏️ Sửa
                   </button>
-
-                  <!-- Toggle Status Button -->
-                  <button 
-                    :class="['btn', 'btn-sm', emp.status === 'ACTIVE' ? 'btn-outline' : 'btn-primary']"
-                    :title="emp.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'"
-                    @click="handleToggleStatus(emp)"
-                  >
-                    {{ emp.status === 'ACTIVE' ? '🔒 Khóa' : '🔓 Mở' }}
-                  </button>
-
-                  <!-- Delete Button -->
                   <button 
                     class="btn btn-danger-outline btn-sm" 
-                    title="Xóa nhân viên"
-                    @click="handleDelete(emp)"
+                    title="Xóa phiếu"
+                    @click="handleDelete(item)"
                   >
                     🗑️
                   </button>
@@ -220,116 +219,135 @@
       </div>
     </div>
 
-    <!-- Create / Edit Employee Modal -->
+    <!-- Create / Edit Modal -->
     <div v-if="modal.isOpen" class="modal-overlay" @click.self="closeModal">
       <div class="modal-card">
         <div class="modal-header">
-          <h3>{{ modal.isEdit ? 'Chỉnh Sửa Thông Tin Nhân Viên' : 'Thêm Nhân Viên Mới' }}</h3>
+          <h3>{{ modal.isEdit ? 'Chỉnh Sửa Phiếu Giao Gas' : 'Nhập Phiếu Báo Cáo Giao Gas Mới' }}</h3>
           <button class="btn-icon" @click="closeModal">✕</button>
         </div>
 
         <form @submit.prevent="handleSubmitForm">
           <div class="modal-body">
-            <!-- Full Name -->
+            <!-- 1. Customer Name -->
             <div class="form-group">
-              <label>Họ và Tên <span style="color: var(--danger);">*</span></label>
+              <label>Tên Khách Hàng <span style="color: var(--danger);">*</span></label>
               <input 
                 type="text" 
-                v-model="form.name" 
+                v-model="form.customerName" 
                 class="form-control" 
-                placeholder="Nhập họ và tên đầy đủ..." 
+                placeholder="VD: Quán Cơm Tấm 24, Cô Lan, Bún Bò Huế..." 
                 required 
               />
             </div>
 
-            <!-- Username & Password Row -->
+            <!-- 2. Container Type & Quantity -->
             <div class="form-row">
               <div class="form-group">
-                <label>Tên Đăng Nhập <span style="color: var(--danger);">*</span></label>
+                <label>Loại Bình Gas <span style="color: var(--danger);">*</span></label>
+                <select v-model="form.containerType" @change="onContainerTypeChange" class="form-control" required>
+                  <option v-for="g in GAS_TYPES" :key="g.type" :value="g.type">
+                    {{ g.type }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Số Lượng (Bình) <span style="color: var(--danger);">*</span></label>
                 <input 
-                  type="text" 
-                  v-model="form.username" 
-                  :disabled="modal.isEdit"
+                  type="number" 
+                  min="1" 
+                  max="100"
+                  v-model.number="form.quantity" 
                   class="form-control" 
-                  placeholder="VD: nguyenvana" 
+                  required 
+                />
+              </div>
+            </div>
+
+            <!-- 3. Unit Price & Computed Total -->
+            <div class="form-row">
+              <div class="form-group">
+                <label>Đơn Giá (VNĐ) <span style="color: var(--danger);">*</span></label>
+                <input 
+                  type="number" 
+                  step="5000"
+                  v-model.number="form.unitPrice" 
+                  class="form-control" 
+                  placeholder="350000"
                   required 
                 />
               </div>
 
               <div class="form-group">
-                <label>
-                  Mật Khẩu 
-                  <span v-if="!modal.isEdit" style="color: var(--danger);">*</span>
-                  <span v-else style="font-size: 0.7rem; color: #64748b;">(để trống nếu giữ nguyên)</span>
-                </label>
-                <input 
-                  type="password" 
-                  v-model="form.password" 
+                <label>Thành Tiền (VNĐ)</label>
+                <div 
                   class="form-control" 
-                  :placeholder="modal.isEdit ? '••••••••' : 'Nhập mật khẩu...'"
-                  :required="!modal.isEdit" 
-                />
+                  style="background: #f1f5f9; font-weight: 800; color: #0f172a; display: flex; align-items: center;"
+                >
+                  {{ formatCurrency(computedTotal) }}
+                </div>
               </div>
             </div>
 
-            <!-- Role & Phone Row -->
-            <div class="form-row">
-              <div class="form-group">
-                <label>Vai Trò / Phân Quyền</label>
-                <select v-model="form.role" class="form-control">
-                  <option value="EMPLOYEE">Nhân Viên Giao Hàng (EMPLOYEE)</option>
-                  <option value="ADMIN">Quản Trị Viên (ADMIN)</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label>Số Điện Thoại</label>
-                <input 
-                  type="text" 
-                  v-model="form.phone" 
-                  class="form-control" 
-                  placeholder="VD: 0987654321" 
-                />
-              </div>
-            </div>
-
-            <!-- Start Date & Salary Row -->
-            <div class="form-row">
-              <div class="form-group">
-                <label>Ngày Vào Làm</label>
-                <input 
-                  type="date" 
-                  v-model="form.startDate" 
-                  class="form-control" 
-                />
-              </div>
-
-              <div class="form-group">
-                <label>Lương Cơ Bản (VNĐ)</label>
-                <input 
-                  type="number" 
-                  step="500000"
-                  v-model.number="form.baseSalary" 
-                  class="form-control" 
-                  placeholder="VD: 7000000" 
-                />
-              </div>
-            </div>
-
-            <!-- Status -->
+            <!-- 4. Payment Status (Nợ / Đã thanh toán) -->
             <div class="form-group">
-              <label>Trạng Thái Tài Khoản</label>
-              <select v-model="form.status" class="form-control">
-                <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
-                <option value="INACTIVE">Tạm dừng / Khóa (INACTIVE)</option>
-              </select>
+              <label>Trạng Thái Thanh Toán <span style="color: var(--danger);">*</span></label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.25rem;">
+                <label 
+                  :style="{
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    border: form.paymentStatus === 'PAID' ? '2px solid #10b981' : '1px solid #cbd5e1',
+                    background: form.paymentStatus === 'PAID' ? '#d1fae5' : '#ffffff',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontWeight: '700',
+                    color: form.paymentStatus === 'PAID' ? '#065f46' : '#475569'
+                  }"
+                >
+                  <input type="radio" value="PAID" v-model="form.paymentStatus" style="accent-color: #10b981;" />
+                  <span>✅ Đã Thanh Toán</span>
+                </label>
+
+                <label 
+                  :style="{
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    border: form.paymentStatus === 'DEBT' ? '2px solid #ef4444' : '1px solid #cbd5e1',
+                    background: form.paymentStatus === 'DEBT' ? '#fee2e2' : '#ffffff',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontWeight: '700',
+                    color: form.paymentStatus === 'DEBT' ? '#991b1b' : '#475569'
+                  }"
+                >
+                  <input type="radio" value="DEBT" v-model="form.paymentStatus" style="accent-color: #ef4444;" />
+                  <span>⚠️ Ghi Nợ (Chưa Trả)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- 5. Notes -->
+            <div class="form-group">
+              <label>Ghi Chú Giao Hàng</label>
+              <textarea 
+                v-model="form.notes" 
+                class="form-control" 
+                rows="2" 
+                placeholder="VD: Giao lên lầu 3, khách đổi bình rỉ sét, hẹn 18h quay lại lấy tiền..."
+              ></textarea>
             </div>
           </div>
 
           <div class="modal-footer">
             <button type="button" class="btn btn-outline" @click="closeModal">Hủy bỏ</button>
             <button type="submit" class="btn btn-primary" :disabled="formSubmitting">
-              {{ formSubmitting ? 'Đang lưu...' : (modal.isEdit ? 'Lưu Thay Đổi' : 'Thêm Mới') }}
+              {{ formSubmitting ? 'Đang lưu...' : (modal.isEdit ? 'Lưu Thay Đổi' : 'Lập Phiếu Giao') }}
             </button>
           </div>
         </form>
@@ -341,109 +359,127 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import AppLayout from '../components/layout/AppLayout.vue'
-import { userService } from '../services/userService'
+import { deliveryReportService, GAS_TYPES } from '../services/deliveryReportService'
 
 // State
-const employees = ref([])
+const reports = ref([])
 const loading = ref(false)
 const isMockData = ref(false)
 const formSubmitting = ref(false)
+const selectedDate = ref(new Date().toISOString().split('T')[0])
 
-const filters = reactive({
-  keyword: '',
-  role: '',
-  status: ''
-})
+// Filters
+const searchKeyword = ref('')
+const filterStatus = ref('')
+const filterContainer = ref('')
 
+// Modal state
 const modal = reactive({
   isOpen: false,
   isEdit: false,
   currentId: null
 })
 
+// Form data
 const form = reactive({
-  name: '',
-  username: '',
-  password: '',
-  role: 'EMPLOYEE',
-  phone: '',
-  startDate: '',
-  baseSalary: 7000000,
-  status: 'ACTIVE'
+  customerName: '',
+  containerType: 'Bình 12kg Xám',
+  quantity: 1,
+  unitPrice: 350000,
+  paymentStatus: 'PAID',
+  notes: ''
 })
 
-// Computed Statistics
+// Computed Total for Form
+const computedTotal = computed(() => {
+  const qty = Number(form.quantity) || 0
+  const price = Number(form.unitPrice) || 0
+  return qty * price
+})
+
+// Filtered reports
+const filteredReports = computed(() => {
+  return reports.value.filter(item => {
+    // Keyword match
+    if (searchKeyword.value.trim()) {
+      const kw = searchKeyword.value.toLowerCase().trim()
+      const matchName = item.customerName && item.customerName.toLowerCase().includes(kw)
+      const matchNotes = item.notes && item.notes.toLowerCase().includes(kw)
+      if (!matchName && !matchNotes) return false
+    }
+
+    // Payment status match
+    if (filterStatus.value && item.paymentStatus !== filterStatus.value) {
+      return false
+    }
+
+    // Container type match
+    if (filterContainer.value && item.containerType !== filterContainer.value) {
+      return false
+    }
+
+    return true
+  })
+})
+
+// Statistics
 const stats = computed(() => {
-  const total = employees.value.length
-  const active = employees.value.filter(e => e.status === 'ACTIVE').length
-  const inactive = total - active
-  const totalSalary = employees.value.reduce((sum, e) => sum + (e.baseSalary || 0), 0)
-  return { total, active, inactive, totalSalary }
+  const totalQuantity = reports.value.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0)
+  const totalAmount = reports.value.reduce((sum, r) => sum + (Number(r.total) || 0), 0)
+  const paidAmount = reports.value
+    .filter(r => r.paymentStatus === 'PAID')
+    .reduce((sum, r) => sum + (Number(r.total) || 0), 0)
+  const debtAmount = totalAmount - paidAmount
+
+  return { totalQuantity, totalAmount, paidAmount, debtAmount }
 })
 
 // Methods
-const fetchEmployees = async () => {
+const fetchReports = async () => {
   loading.value = true
   try {
-    const res = await userService.getUsers({
-      keyword: filters.keyword,
-      role: filters.role,
-      status: filters.status
-    })
-    employees.value = res.data || []
+    const res = await deliveryReportService.getTodayReports(selectedDate.value)
+    reports.value = res.data || []
     isMockData.value = !!res.isMock
-  } catch (error) {
-    console.error('Không thể tải nhân viên:', error)
+  } catch (err) {
+    console.error('Lỗi tải báo cáo giao gas:', err)
   } finally {
     loading.value = false
   }
 }
 
-let debounceTimer = null
-const handleSearchDebounce = () => {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => {
-    fetchEmployees()
-  }, 300)
+const onContainerTypeChange = () => {
+  const found = GAS_TYPES.find(g => g.type === form.containerType)
+  if (found) {
+    form.unitPrice = found.defaultPrice
+  }
 }
 
-const resetFilters = () => {
-  filters.keyword = ''
-  filters.role = ''
-  filters.status = ''
-  fetchEmployees()
-}
-
-// Modal controls
 const openCreateModal = () => {
   modal.isOpen = true
   modal.isEdit = false
   modal.currentId = null
   Object.assign(form, {
-    name: '',
-    username: '',
-    password: '',
-    role: 'EMPLOYEE',
-    phone: '',
-    startDate: new Date().toISOString().split('T')[0],
-    baseSalary: 7000000,
-    status: 'ACTIVE'
+    customerName: '',
+    containerType: 'Bình 12kg Xám',
+    quantity: 1,
+    unitPrice: 350000,
+    paymentStatus: 'PAID',
+    notes: ''
   })
 }
 
-const openEditModal = (emp) => {
+const openEditModal = (item) => {
   modal.isOpen = true
   modal.isEdit = true
-  modal.currentId = emp.id
+  modal.currentId = item.id
   Object.assign(form, {
-    name: emp.name,
-    username: emp.username,
-    password: '',
-    role: emp.role,
-    phone: emp.phone || '',
-    startDate: emp.startDate || '',
-    baseSalary: emp.baseSalary || 0,
-    status: emp.status
+    customerName: item.customerName,
+    containerType: item.containerType,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+    paymentStatus: item.paymentStatus,
+    notes: item.notes || ''
   })
 }
 
@@ -454,15 +490,21 @@ const closeModal = () => {
 const handleSubmitForm = async () => {
   formSubmitting.value = true
   try {
+    const payload = {
+      ...form,
+      total: computedTotal.value,
+      reportDate: selectedDate.value
+    }
+
     if (modal.isEdit) {
-      await userService.updateUser(modal.currentId, { ...form })
-      alert('Đã cập nhật thông tin nhân viên thành công!')
+      await deliveryReportService.updateReport(modal.currentId, payload)
+      alert('Đã cập nhật phiếu giao gas thành công!')
     } else {
-      await userService.createUser({ ...form })
-      alert('Đã thêm mới nhân viên thành công!')
+      await deliveryReportService.createReport(payload)
+      alert('Đã ghi nhận phiếu giao gas mới thành công!')
     }
     closeModal()
-    fetchEmployees()
+    fetchReports()
   } catch (err) {
     alert('Thao tác thất bại: ' + err.message)
   } finally {
@@ -470,25 +512,25 @@ const handleSubmitForm = async () => {
   }
 }
 
-const handleToggleStatus = async (emp) => {
-  const actionText = emp.status === 'ACTIVE' ? 'khóa' : 'mở khóa'
-  if (confirm(`Bạn có chắc chắn muốn ${actionText} tài khoản của ${emp.name}?`)) {
+const handleTogglePayment = async (item) => {
+  const nextStatusText = item.paymentStatus === 'PAID' ? 'Ghi Nợ' : 'Đã Thanh Toán'
+  if (confirm(`Chuyển trạng thái đơn của [${item.customerName}] sang "${nextStatusText}"?`)) {
     try {
-      await userService.toggleStatus(emp.id)
-      fetchEmployees()
+      await deliveryReportService.togglePaymentStatus(item.id)
+      fetchReports()
     } catch (err) {
-      alert('Không thể cập nhật trạng thái: ' + err.message)
+      alert('Lỗi cập nhật: ' + err.message)
     }
   }
 }
 
-const handleDelete = async (emp) => {
-  if (confirm(`Xác nhận xóa vĩnh viễn nhân viên [${emp.name}] khỏi hệ thống?`)) {
+const handleDelete = async (item) => {
+  if (confirm(`Xác nhận xóa phiếu giao gas cho khách [${item.customerName}]?`)) {
     try {
-      await userService.deleteUser(emp.id)
-      fetchEmployees()
+      await deliveryReportService.deleteReport(item.id)
+      fetchReports()
     } catch (err) {
-      alert('Không thể xóa nhân viên: ' + err.message)
+      alert('Không thể xóa phiếu: ' + err.message)
     }
   }
 }
@@ -499,21 +541,20 @@ const formatCurrency = (val) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
 }
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return '—'
-  const d = new Date(dateStr)
-  return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('vi-VN')
-}
-
-const getInitials = (name) => {
-  if (!name) return 'NV'
-  const parts = name.trim().split(' ')
-  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase()
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+const getContainerBadgeStyle = (type) => {
+  if (type.includes('45kg')) {
+    return { background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a' }
+  }
+  if (type.includes('Đỏ')) {
+    return { background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' }
+  }
+  if (type.includes('Mini')) {
+    return { background: '#ede9fe', color: '#5b21b6', border: '1px solid #ddd6fe' }
+  }
+  return { background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd' }
 }
 
 onMounted(() => {
-  fetchEmployees()
+  fetchReports()
 })
 </script>
-
