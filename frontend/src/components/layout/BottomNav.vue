@@ -68,3 +68,4 @@ defineProps({
 const route = useRoute()
 const isActive = (path) => route.path.startsWith(path)
 </script>
+
