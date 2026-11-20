@@ -4,7 +4,7 @@ Dự án Đồ án Tốt nghiệp được xây dựng theo **Kiến trúc Tách
 
 * **Backend:** Java 21 LTS • Spring Boot 3.2.5 • Spring Data JPA • Spring Security 6 (Stateless JWT)
 * **Database:** Microsoft SQL Server (8 Bảng chuẩn hóa 3NF • Khóa ngoại UUID toàn diện)
-* **Frontend:** React 18 • Vite • TailwindCSS (Single Page Application - SPA)
+* **Frontend:** Vue 3 • Vite • Vue Router 4 • Axios (Single Page Application - SPA)
 
 ---
 
@@ -55,7 +55,17 @@ cd polyGas
 ### Bước 3: Chạy ứng dụng Backend
 1. Tìm đến file: `src/main/java/poly/duantn/DuAnTnApplication.java`.
 2. Chuột phải $\rightarrow$ `Run As` $\rightarrow$ `Spring Boot App` (hoặc `Java Application`).
-3. Mở trình duyệt truy cập: `http://localhost:8080` (Cổng mặc định).
+3. Mở trình duyệt truy cập: `http://localhost:8080` (Cổng mặc định của API Backend).
+
+### Bước 4: Chạy ứng dụng Frontend (Vue 3 + Vite)
+1. Mở cửa sổ Terminal (PowerShell / Git Bash) tại thư mục gốc của dự án:
+```bash
+cd frontend
+npm install    # (Chỉ cần chạy lần đầu khi mới clone code về)
+npm run dev
+```
+2. Mở trình duyệt truy cập: `http://localhost:5173`
+3. Truy cập trực tiếp trang Quản lý Nhân sự: `http://localhost:5173/employment`
 
 ---
 
