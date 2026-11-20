@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import EmploymentView from '../views/EmploymentView.vue'
-import DashboardView from '../views/DashboardView.vue'
+import CustomersView from '../views/CustomersView.vue'
+import DebtsView from '../views/DebtsView.vue'
 
 const routes = [
   {
@@ -17,18 +18,22 @@ const routes = [
     }
   },
   {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: DashboardView,
+    path: '/customers',
+    name: 'Customers',
+    component: CustomersView,
     meta: {
-      title: 'Tổng Quan Hệ Thống - OriginGas',
+      title: 'Danh Bạ Khách Hàng - OriginGas',
       requiresAuth: true
     }
   },
-  // Alias đường dẫn cho thuận tiện
   {
-    path: '/employees',
-    redirect: '/employment'
+    path: '/debts',
+    name: 'Debts',
+    component: DebtsView,
+    meta: {
+      title: 'Sổ Nợ Cần Thu - OriginGas',
+      requiresAuth: true
+    }
   },
   // Bắt tất cả các route khác chuyển về /employment
   {
@@ -43,7 +48,7 @@ const router = createRouter({
   linkActiveClass: 'active'
 })
 
-// Navigation Guard (Bộ điều hướng Router)
+// Navigation Guard
 router.beforeEach((to, from, next) => {
   if (to.meta && to.meta.title) {
     document.title = to.meta.title
@@ -52,4 +57,3 @@ router.beforeEach((to, from, next) => {
 })
 
 export default router
-
