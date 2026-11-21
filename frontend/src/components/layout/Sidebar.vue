@@ -22,6 +22,11 @@
 
       <div class="nav-section-title">Quản Lý & Thống Kê</div>
 
+      <router-link to="/admin/view_report" class="nav-link">
+        <span class="nav-icon">📑</span>
+        <span>Báo Cáo & Thu Chi NV</span>
+      </router-link>
+
       <router-link to="/dashboard" class="nav-link">
         <span class="nav-icon">📊</span>
         <span>Tổng Quan Hệ Thống</span>
@@ -29,15 +34,15 @@
 
       <div class="nav-section-title">Nghiệp Vụ Gas</div>
 
-      <a href="#inventory" class="nav-link" @click.prevent="alertFeature('Quản lý Kho gas')">
+      <router-link to="/inventory" class="nav-link">
         <span class="nav-icon">📦</span>
         <span>Quản Lý Kho Gas</span>
-      </a>
+      </router-link>
 
-      <a href="#delivery" class="nav-link" @click.prevent="alertFeature('Sổ nợ & Phiếu giao gas')">
+      <router-link to="/debts" class="nav-link">
         <span class="nav-icon">📝</span>
-        <span>Sổ Nợ & Báo Cáo</span>
-      </a>
+        <span>Sổ Nợ & Khách Hàng</span>
+      </router-link>
 
       <a href="#salary" class="nav-link" @click.prevent="alertFeature('Quản lý & Tính lương SpEL')">
         <span class="nav-icon">💰</span>

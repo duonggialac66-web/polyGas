@@ -1,10 +1,6 @@
 package poly.duantn.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import poly.duantn.entity.DeliveryReport;
+import lombok.*;
 import poly.duantn.entity.enums.PaymentStatus;
 
 import java.time.LocalDate;
@@ -12,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * DTO dữ liệu phiếu giao gas gửi về Frontend
+ * DTO dữ liệu trả về thông tin phiếu báo cáo giao gas hoàn chỉnh
  */
 @Data
 @NoArgsConstructor
@@ -21,34 +17,22 @@ import java.util.UUID;
 public class DeliveryReportResponse {
 
     private UUID id;
+    private UUID employeeId;
+    private String employeeName;
+    private UUID customerId;
     private String customerName;
+    private UUID inventoryId;
     private String containerType;
     private Integer quantity;
     private Double unitPrice;
     private Double total;
+    private Double actualReceived;
+    private Integer returnedShells;
+    private Integer debtShells;
+    private String shellStatus;
     private PaymentStatus paymentStatus;
     private String notes;
+    private String receiptUrl;
     private LocalDate reportDate;
-    private UUID employeeId;
-    private String employeeName;
     private LocalDateTime createdAt;
-
-    public static DeliveryReportResponse fromEntity(DeliveryReport report) {
-        if (report == null) return null;
-        return DeliveryReportResponse.builder()
-                .id(report.getId())
-                .customerName(report.getCustomerName())
-                .containerType(report.getInventory() != null ? report.getInventory().getContainerType() : "Không xác định")
-                .quantity(report.getQuantity())
-                .unitPrice(report.getUnitPrice())
-                .total(report.getTotal())
-                .paymentStatus(report.getPaymentStatus())
-                .notes(report.getNotes())
-                .reportDate(report.getReportDate())
-                .employeeId(report.getEmployee() != null ? report.getEmployee().getId() : null)
-                .employeeName(report.getEmployee() != null ? report.getEmployee().getName() : "Nhân viên")
-                .createdAt(report.getCreatedAt())
-                .build();
-    }
 }
-

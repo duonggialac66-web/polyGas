@@ -52,8 +52,8 @@
       </div>
     </header>
 
-    <!-- Main Workspace (Chiếm trọn bề ngang màn hình, có max-w để dễ nhìn) -->
-    <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 pt-5 pb-24">
+    <!-- Main Workspace (Chiếm trọn bề ngang màn hình, linh hoạt độ rộng cho trang Admin) -->
+    <main class="flex-1 w-full mx-auto px-4 sm:px-6 pt-5 pb-24" :class="wide ? 'max-w-7xl' : 'max-w-4xl'">
       <slot />
     </main>
 
@@ -73,6 +73,10 @@ defineProps({
   debtCount: {
     type: Number,
     default: 0
+  },
+  wide: {
+    type: Boolean,
+    default: false
   }
 })
 
