@@ -22,6 +22,7 @@ target/
 ~$*
 
 # Eclipse / STS project files (specific to local machine environment)
+.metadata/
 .settings/
 .project
 .classpath

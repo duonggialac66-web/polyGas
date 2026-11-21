@@ -12,6 +12,10 @@ GO
 USE [polyGasDB];
 GO
 
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
+
 -- 1. BẢNG USERS (Người dùng & Nhân viên)
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'users')
 BEGIN
@@ -165,13 +169,13 @@ GO
 IF NOT EXISTS (SELECT * FROM users WHERE username = 'admin')
 BEGIN
     INSERT INTO users (id, name, username, password, role, phone, start_date, status, base_salary)
-    VALUES (NEWID(), N'Quản trị viên OriginGas', 'admin', '$2a$10$7zBfWq2R9jA7K7k1rMv.yeJ1a4L1nO6hE9x2V3c4bYyR9Qc1O6789', 'ADMIN', '0901234567', '2026-01-01', 'ACTIVE', 15000000);
+    VALUES (NEWID(), N'Quản trị viên OriginGas', 'admin', '$2a$10$hIPYbMB7vsb.0Ytatfpy3O3TPgacKWQHSE.E2bnCtauE4/SeeqRg.', 'ADMIN', '0901234567', '2026-01-01', 'ACTIVE', 15000000);
 END
 
 IF NOT EXISTS (SELECT * FROM users WHERE username = 'shipper01')
 BEGIN
     INSERT INTO users (id, name, username, password, role, phone, start_date, status, base_salary)
-    VALUES (NEWID(), N'Nguyễn Văn Giao', 'shipper01', '$2a$10$7zBfWq2R9jA7K7k1rMv.yeJ1a4L1nO6hE9x2V3c4bYyR9Qc1O6789', 'EMPLOYEE', '0987654321', '2026-02-01', 'ACTIVE', 7000000);
+    VALUES (NEWID(), N'Nguyễn Văn Giao', 'shipper01', '$2a$10$hIPYbMB7vsb.0Ytatfpy3O3TPgacKWQHSE.E2bnCtauE4/SeeqRg.', 'EMPLOYEE', '0987654321', '2026-02-01', 'ACTIVE', 7000000);
 END
 
 -- KHO HÀNG & CẤU HÌNH HOA HỒNG (LIÊN KẾT KHÓA NGOẠI INVENTORY_ID)

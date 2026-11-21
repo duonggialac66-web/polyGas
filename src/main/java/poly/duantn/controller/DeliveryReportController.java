@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import poly.duantn.dto.ApiResponse;
+import poly.duantn.dto.DailyReconciliationResponse;
 import poly.duantn.dto.DeliveryReportRequest;
 import poly.duantn.dto.DeliveryReportResponse;
 import poly.duantn.entity.DeliveryReport;
@@ -17,6 +18,7 @@ import poly.duantn.entity.enums.Role;
 import poly.duantn.repository.DeliveryReportRepository;
 import poly.duantn.repository.InventoryRepository;
 import poly.duantn.repository.UserRepository;
+import poly.duantn.service.DeliveryReportService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -37,6 +39,36 @@ public class DeliveryReportController {
     private final DeliveryReportRepository deliveryReportRepository;
     private final InventoryRepository inventoryRepository;
     private final UserRepository userRepository;
+    private final DeliveryReportService deliveryReportService;
+
+    /**
+     * Lấy lịch sử giao hàng theo khoảng ngày (fromDate, toDate) của shipper hoặc toàn hệ thống
+     * GET /api/v1/delivery-reports/history hoặc GET /api/v1/employment/history
+     */
+    @GetMapping("/history")
+    public ResponseEntity<ApiResponse<List<DeliveryReportResponse>>> getDeliveryHistory(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false) UUID employeeId
+    ) {
+        log.info("API GET /history - fromDate: {}, toDate: {}, employeeId: {}", fromDate, toDate, employeeId);
+        List<DeliveryReportResponse> history = deliveryReportService.getDeliveryHistory(fromDate, toDate, employeeId);
+        return ResponseEntity.ok(ApiResponse.ok(history, "Lấy lịch sử giao hàng thành công"));
+    }
+
+    /**
+     * Lấy số liệu đối soát nộp tiền mặt cuối ngày của shipper
+     * GET /api/v1/delivery-reports/daily-reconciliation hoặc GET /api/v1/employment/daily-reconciliation
+     */
+    @GetMapping("/daily-reconciliation")
+    public ResponseEntity<ApiResponse<DailyReconciliationResponse>> getDailyReconciliation(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate reportDate,
+            @RequestParam(required = false) UUID employeeId
+    ) {
+        log.info("API GET /daily-reconciliation - reportDate: {}, employeeId: {}", reportDate, employeeId);
+        DailyReconciliationResponse response = deliveryReportService.getDailyReconciliation(reportDate, employeeId);
+        return ResponseEntity.ok(ApiResponse.ok(response, "Lấy số liệu đối soát tiền mặt cuối ngày thành công"));
+    }
 
     /**
      * Lấy danh sách báo cáo giao gas trong ngày của nhân viên

@@ -25,6 +25,11 @@ public interface DeliveryReportRepository extends JpaRepository<DeliveryReport, 
     List<DeliveryReport> findByPaymentStatus(PaymentStatus paymentStatus);
 
     /**
+     * Lấy danh sách đơn nợ hoặc đã thanh toán của một nhân viên cụ thể
+     */
+    List<DeliveryReport> findByEmployeeIdAndPaymentStatus(UUID employeeId, PaymentStatus paymentStatus);
+
+    /**
      * Lấy các đơn nợ (DEBT) của một khách hàng cụ thể
      */
     List<DeliveryReport> findByCustomerIdAndPaymentStatus(UUID customerId, PaymentStatus paymentStatus);
