@@ -79,6 +79,16 @@ public class ExpenseServiceImpl implements ExpenseService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<ExpenseResponse> getExpensesByDate(LocalDate date) {
+        LocalDate targetDate = (date != null) ? date : LocalDate.now();
+        return expenseRepository.findAll().stream()
+                .filter(e -> targetDate.equals(e.getExpenseDate()))
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     private ExpenseResponse mapToResponse(Expense expense) {
         return ExpenseResponse.builder()
                 .id(expense.getId())

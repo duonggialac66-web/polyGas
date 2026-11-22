@@ -1,35 +1,27 @@
 <template>
   <EmployeeLayout :is-backend-connected="!isMockData" :debt-count="debtBillsCount" @refresh="fetchReports">
-    <!-- Top Action Bar & Date Selector -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-200">
       <div>
-        <div class="flex items-center gap-2">
-          <span class="inline-block w-2 h-2 rounded-full bg-sky-500"></span>
-          <h2 class="text-xl font-extrabold tracking-tight text-slate-900">Báo Cáo Giao Gas Hôm Nay</h2>
-        </div>
-        <p class="text-xs text-slate-500 mt-0.5">Nhập số lượng bình giao và cập nhật tiền thu / công nợ khách</p>
+        <h2 class="text-lg font-bold text-slate-900 tracking-tight">Báo Cáo Giao Gas Trong Ngày</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Quản lý các đợt giao vỏ/bình, công nợ và thu tiền khách hàng</p>
       </div>
 
       <div class="flex items-center gap-2">
         <!-- Date Selector -->
-        <div class="relative">
-          <input 
-            type="date" 
-            v-model="selectedDate" 
-            @change="fetchReports"
-            class="text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all cursor-pointer"
-          />
-        </div>
+        <input 
+          type="date" 
+          v-model="selectedDate" 
+          @change="fetchReports"
+          class="text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg px-3 py-1.5 shadow-2xs focus:outline-none focus:border-slate-800 transition-colors cursor-pointer"
+        />
 
-        <!-- Main CTA Button -->
+        <!-- Action CTA -->
         <button 
           @click="openCreateModal"
-          class="inline-flex items-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-sm shadow-sky-600/20 transition-all duration-150"
+          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors"
         >
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          <span>Nhập Phiếu Giao</span>
+          <span>➕ Nhập Phiếu Giao</span>
         </button>
       </div>
     </div>
@@ -37,200 +29,145 @@
     <!-- Alert Banner when Backend is Offline (Mock Mode) -->
     <div 
       v-if="isMockData" 
-      class="mb-4 p-3 bg-amber-50/90 border border-amber-200/80 rounded-2xl flex items-center justify-between text-xs text-amber-900"
+      class="mb-5 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between text-xs text-amber-800"
     >
       <div class="flex items-center gap-2">
-        <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span>
-          <strong>Backend chưa kết nối:</strong> Đang chạy chế độ dữ liệu thử nghiệm (Mock Data). Bạn vẫn có thể nhập phiếu, tính tiền và đổi nợ bình thường!
-        </span>
+        <span class="font-bold text-amber-900">Chế độ Demo (Offline):</span>
+        <span>Hệ thống backend chưa khởi động. Bạn vẫn có thể thao tác với dữ liệu mẫu bên dưới.</span>
       </div>
-      <button @click="fetchReports" class="text-[11px] font-bold text-amber-800 hover:underline flex-shrink-0 ml-2">
+      <button @click="fetchReports" class="text-xs font-semibold text-amber-900 hover:underline ml-2">
         Thử lại
       </button>
     </div>
 
-    <!-- Summary Metrics (Cards Thống Kê Nhanh) -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-      <!-- Total Cylinders -->
-      <div class="bg-white p-3.5 rounded-2xl border border-slate-200/70 shadow-sm">
-        <div class="flex items-center justify-between text-slate-500 mb-1">
-          <span class="text-[11px] font-medium uppercase tracking-wider">Bình Đã Giao</span>
-          <span class="text-sm">🛢️</span>
-        </div>
-        <div class="text-xl font-black text-slate-900 tracking-tight">
-          {{ stats.totalQuantity }} <span class="text-xs font-semibold text-slate-500 font-normal">bình</span>
+    <!-- KPI Summary Metrics (Professional Clean Corporate) -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6">
+      <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-2xs">
+        <div class="text-[11px] font-semibold tracking-wider text-slate-500 uppercase mb-1">Bình Đã Giao</div>
+        <div class="text-xl font-bold text-slate-900">
+          {{ stats.totalQuantity }} <span class="text-xs font-normal text-slate-500">bình</span>
         </div>
       </div>
 
-      <!-- Total Turnover -->
-      <div class="bg-white p-3.5 rounded-2xl border border-slate-200/70 shadow-sm">
-        <div class="flex items-center justify-between text-slate-500 mb-1">
-          <span class="text-[11px] font-medium uppercase tracking-wider">Tổng Doanh Thu</span>
-          <span class="text-sm">💵</span>
-        </div>
-        <div class="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+      <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-2xs">
+        <div class="text-[11px] font-semibold tracking-wider text-slate-500 uppercase mb-1">Tổng Doanh Thu</div>
+        <div class="text-lg font-bold text-slate-900">
           {{ formatCurrency(stats.totalAmount) }}
         </div>
       </div>
 
-      <!-- Paid Amount -->
-      <div class="bg-white p-3.5 rounded-2xl border border-slate-200/70 shadow-sm">
-        <div class="flex items-center justify-between text-emerald-700 mb-1">
-          <span class="text-[11px] font-bold uppercase tracking-wider">Đã Thu Tiền</span>
-          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-        </div>
-        <div class="text-base sm:text-lg font-black text-emerald-600 tracking-tight">
+      <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-2xs">
+        <div class="text-[11px] font-semibold tracking-wider text-emerald-600 uppercase mb-1">Đã Thu Tiền</div>
+        <div class="text-lg font-bold text-emerald-600">
           {{ formatCurrency(stats.paidAmount) }}
         </div>
       </div>
 
-      <!-- Debt Amount -->
-      <div class="bg-white p-3.5 rounded-2xl border border-slate-200/70 shadow-sm">
-        <div class="flex items-center justify-between text-rose-700 mb-1">
-          <span class="text-[11px] font-bold uppercase tracking-wider">Khách Còn Nợ</span>
-          <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-        </div>
-        <div class="text-base sm:text-lg font-black text-rose-600 tracking-tight">
+      <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-2xs">
+        <div class="text-[11px] font-semibold tracking-wider text-rose-600 uppercase mb-1">Khách Còn Nợ</div>
+        <div class="text-lg font-bold text-rose-600">
           {{ formatCurrency(stats.debtAmount) }}
         </div>
       </div>
     </div>
 
-    <!-- Filter & Search Toolbar -->
-    <div class="bg-white p-2.5 rounded-2xl border border-slate-200/70 shadow-sm mb-4 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
-      <!-- Search Input -->
+    <!-- Toolbar: Search & Segmented Filter -->
+    <div class="bg-white p-2.5 rounded-xl border border-slate-200 mb-4 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between shadow-2xs">
       <div class="relative flex-1">
-        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
         <input 
           type="text" 
           v-model="searchKeyword" 
-          placeholder="Tìm tên khách, ghi chú..." 
-          class="w-full pl-9 pr-3 py-1.5 text-xs text-slate-700 bg-slate-50 border border-slate-200/80 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all placeholder:text-slate-400"
+          placeholder="Tìm tên khách hàng hoặc ghi chú..." 
+          class="w-full px-3 py-1.5 text-xs text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-800 transition-colors placeholder:text-slate-400 font-medium"
         />
       </div>
 
-      <!-- Segmented Status Tabs -->
-      <div class="flex items-center gap-1 p-1 bg-slate-100 rounded-xl self-start sm:self-auto">
+      <div class="flex items-center gap-1 self-start sm:self-auto">
         <button 
           @click="filterStatus = ''" 
-          class="px-2.5 py-1 text-xs font-semibold rounded-lg transition-all"
-          :class="filterStatus === '' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+          class="px-2.5 py-1 text-xs rounded-md transition-colors font-medium"
+          :class="filterStatus === '' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'"
         >
-          Tất Cả ({{ reports.length }})
+          Tất cả ({{ reports.length }})
         </button>
         <button 
           @click="filterStatus = 'PAID'" 
-          class="px-2.5 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1"
-          :class="filterStatus === 'PAID' ? 'bg-emerald-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+          class="px-2.5 py-1 text-xs rounded-md transition-colors font-medium"
+          :class="filterStatus === 'PAID' ? 'bg-emerald-600 text-white' : 'text-slate-600 hover:bg-slate-100'"
         >
-          <span>Đã Thu</span>
+          Đã Thu
         </button>
         <button 
           @click="filterStatus = 'DEBT'" 
-          class="px-2.5 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1"
-          :class="filterStatus === 'DEBT' ? 'bg-rose-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+          class="px-2.5 py-1 text-xs rounded-md transition-colors font-medium"
+          :class="filterStatus === 'DEBT' ? 'bg-rose-600 text-white' : 'text-slate-600 hover:bg-slate-100'"
         >
-          <span>Nợ ({{ debtBillsCount }})</span>
+          Ghi Nợ ({{ debtBillsCount }})
         </button>
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="py-16 text-center text-slate-400">
-      <div class="w-7 h-7 border-2 border-sky-500/30 border-t-sky-600 rounded-full animate-spin mx-auto mb-2"></div>
-      <p class="text-xs font-medium">Đang đồng bộ dữ liệu giao hàng...</p>
+    <!-- Loading -->
+    <div v-if="loading" class="py-16 text-center text-slate-500 bg-white rounded-xl border border-slate-200">
+      <div class="w-6 h-6 border-2 border-slate-300 border-t-slate-800 rounded-full animate-spin mx-auto mb-2"></div>
+      <p class="text-xs">Đang tải dữ liệu báo cáo...</p>
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="filteredReports.length === 0" class="bg-white rounded-2xl border border-dashed border-slate-200 p-12 text-center">
-      <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-xl mx-auto mb-3">
-        📝
-      </div>
-      <h3 class="text-sm font-bold text-slate-800">Chưa có phiếu giao gas nào hôm nay</h3>
-      <p class="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-        Bấm nút bên dưới để ghi nhận chuyến giao gas đầu tiên trong ca làm việc.
-      </p>
-      <button 
-        @click="openCreateModal"
-        class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-sm transition-all"
-      >
-        <span>➕ Nhập Phiếu Đầu Tiên</span>
-      </button>
+    <div v-else-if="filteredReports.length === 0" class="bg-white rounded-xl border border-dashed border-slate-300 p-12 text-center">
+      <h3 class="text-sm font-semibold text-slate-700">Chưa có phiếu giao gas nào</h3>
+      <p class="text-xs text-slate-500 mt-1">Chọn ngày khác hoặc tạo mới một phiếu giao gas cho ca làm việc.</p>
     </div>
 
-    <!-- Delivery Reports List (Thiết kế Card tinh tế, tối ưu cho nhân viên thao tác nhanh) -->
-    <div v-else class="space-y-2.5">
+    <!-- Reports Table / Cards List -->
+    <div v-else class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs divide-y divide-slate-100">
       <div 
         v-for="item in filteredReports" 
         :key="item.id"
-        class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
+        class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
       >
-        <!-- Left: Customer Info, Gas Type, Notes -->
         <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 flex-wrap mb-1">
-            <h4 class="text-sm font-bold text-slate-900 tracking-tight">
-              {{ item.customerName }}
-            </h4>
-
-            <!-- Gas Type Pill with distinct color mark -->
-            <span 
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border"
-              :class="getContainerPillClass(item.containerType)"
-            >
-              <span class="w-1.5 h-1.5 rounded-full" :class="getContainerDotClass(item.containerType)"></span>
+          <div class="flex items-center gap-2 mb-1">
+            <h4 class="text-sm font-bold text-slate-900">{{ item.customerName }}</h4>
+            <span class="px-2 py-0.5 rounded text-[11px] font-semibold border bg-slate-100 text-slate-700 border-slate-200">
               {{ item.containerType }}
             </span>
-
-            <!-- Quantity Multiplier -->
-            <span class="text-xs font-extrabold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">
-              SL: {{ item.quantity }}
+            <span class="text-xs font-semibold text-slate-600">
+              x{{ item.quantity }}
             </span>
           </div>
-
-          <!-- Unit price & Note snippet -->
-          <div class="text-xs text-slate-500 flex items-center gap-2 flex-wrap">
-            <span>Đơn giá: <strong class="text-slate-700 font-medium">{{ formatCurrency(item.unitPrice) }}</strong></span>
-            <span v-if="item.notes" class="text-slate-400">•</span>
-            <span v-if="item.notes" class="text-slate-600 italic truncate max-w-xs">
-              "{{ item.notes }}"
-            </span>
+          <div class="text-xs text-slate-500 flex items-center gap-2">
+            <span>Đơn giá: <strong class="text-slate-700">{{ formatCurrency(item.unitPrice) }}</strong></span>
+            <span v-if="item.notes" class="text-slate-300">•</span>
+            <span v-if="item.notes" class="text-slate-600 italic">"{{ item.notes }}"</span>
           </div>
         </div>
 
-        <!-- Right: Total Amount, Payment Toggle Pill & Actions -->
         <div class="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t border-slate-100 sm:border-0">
-          <!-- Total Price -->
           <div class="text-left sm:text-right">
-            <div class="text-sm sm:text-base font-black text-slate-900 tracking-tight">
+            <div class="text-sm sm:text-base font-bold text-slate-900">
               {{ formatCurrency(item.total) }}
             </div>
-            <div class="text-[10px] text-slate-400 sm:text-right">Thành tiền</div>
+            <div class="text-[10px] text-slate-400">Thành tiền</div>
           </div>
 
-          <!-- One-Tap Payment Status Toggle -->
+          <!-- Status Pill -->
           <button 
             @click="handleTogglePayment(item)"
-            class="px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-90 flex items-center gap-1.5"
+            class="px-2.5 py-1 rounded text-xs font-semibold border transition-colors"
             :class="item.paymentStatus === 'PAID' 
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
-              : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 animate-pulse'"
-            :title="item.paymentStatus === 'PAID' ? 'Bấm để chuyển sang Nợ' : 'Bấm để xác nhận Đã thu tiền'"
+              ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100' 
+              : 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100'"
           >
-            <span v-if="item.paymentStatus === 'PAID'">✅ Đã Thu Tiền</span>
-            <span v-else>⚠️ Ghi Nợ (Bấm thu)</span>
+            {{ item.paymentStatus === 'PAID' ? '✓ Đã thu tiền' : '⚠️ Ghi nợ' }}
           </button>
 
-          <!-- Edit & Delete Mini Buttons -->
-          <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+          <!-- Edit & Delete -->
+          <div class="flex items-center gap-1">
             <button 
               @click="openEditModal(item)"
-              class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-              title="Chỉnh sửa phiếu"
+              class="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded transition-colors"
+              title="Sửa phiếu"
             >
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -238,7 +175,7 @@
             </button>
             <button 
               @click="handleDelete(item)"
-              class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+              class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
               title="Xóa phiếu"
             >
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -250,206 +187,150 @@
       </div>
     </div>
 
-    <!-- Create / Edit Modal (Dialog Gọn Gàng, Đẹp, Tối Ưu Thao Tác) -->
+    <!-- Modal Form -->
     <div 
       v-if="modal.isOpen" 
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs transition-opacity"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs transition-opacity"
       @click.self="closeModal"
     >
-      <div class="bg-white w-full max-w-lg rounded-3xl shadow-xl border border-slate-200 overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-150">
-        <!-- Modal Header -->
-        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-          <div>
-            <h3 class="text-sm font-bold text-slate-900">
-              {{ modal.isEdit ? 'Chỉnh Sửa Phiếu Giao Gas' : 'Nhập Phiếu Báo Cáo Giao Gas' }}
-            </h3>
-            <p class="text-[11px] text-slate-500">Ghi nhận thông tin bình gas giao cho khách</p>
-          </div>
-          <button @click="closeModal" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+      <div class="bg-white w-full max-w-lg rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+        <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+          <h3 class="text-sm font-bold text-slate-900">
+            {{ modal.isEdit ? 'Chỉnh Sửa Phiếu Giao Gas' : 'Nhập Phiếu Giao Gas Mới' }}
+          </h3>
+          <button @click="closeModal" class="p-1 text-slate-400 hover:text-slate-600">✕</button>
         </div>
 
-        <!-- Form Body -->
         <form @submit.prevent="handleSubmitForm" class="p-5 space-y-4">
-          <!-- General Form Error Banner -->
-          <div v-if="errors.general" class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
-            <span>⚠️</span>
-            <span>{{ errors.general }}</span>
+          <div v-if="errors.general" class="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700">
+            {{ errors.general }}
           </div>
 
-          <!-- 1. Customer Name -->
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
               Tên Khách Hàng <span class="text-rose-500">*</span>
             </label>
             <input 
               type="text" 
               v-model="form.customerName" 
               @input="delete errors.customerName"
-              placeholder="VD: Quán Cơm Tấm 24, Cô Lan, Bún Bò Huế 36..."
+              placeholder="VD: Quán Ăn Cô Ba, Bún Bò Huế 36..."
               :class="[
-                'w-full px-3.5 py-2.5 text-xs text-slate-800 bg-slate-50 border rounded-xl focus:bg-white focus:outline-none transition-all placeholder:text-slate-400 font-medium',
-                errors.customerName ? 'border-rose-500 bg-rose-50/20 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500' : 'border-slate-200 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500'
+                'w-full px-3 py-2 text-xs text-slate-900 bg-white border rounded-lg focus:outline-none transition-colors font-medium',
+                errors.customerName ? 'border-rose-500 bg-rose-50/20' : 'border-slate-300 focus:border-slate-800'
               ]"
             />
-            <p v-if="errors.customerName" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
-              <span>⚠️</span> {{ errors.customerName }}
+            <p v-if="errors.customerName" class="text-xs text-rose-600 mt-1 font-medium">
+              {{ errors.customerName }}
             </p>
           </div>
 
-          <!-- 2. Gas Container Selector Chips -->
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1.5">
-              Chọn Loại Bình Gas <span class="text-rose-500">*</span>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Loại Bình Gas <span class="text-rose-500">*</span>
             </label>
-            <div class="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                v-for="g in GAS_TYPES"
-                :key="g.type"
-                @click="selectGasType(g)"
-                class="p-2.5 text-left rounded-xl border transition-all text-xs flex flex-col justify-between"
-                :class="form.containerType === g.type 
-                  ? 'border-sky-500 bg-sky-50/80 ring-2 ring-sky-500/20 text-sky-950 font-bold' 
-                  : (errors.containerType ? 'border-rose-300 bg-rose-50/10 text-slate-700 font-medium' : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700 font-medium')"
-              >
-                <span>🛢️ {{ g.type }}</span>
-                <span class="text-[11px] text-slate-500 mt-1">{{ formatCurrency(g.defaultPrice) }}</span>
-              </button>
-            </div>
-            <p v-if="errors.containerType" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
-              <span>⚠️</span> {{ errors.containerType }}
-            </p>
+            <select 
+              v-model="form.containerType" 
+              @change="onSelectGasTypeChange"
+              class="w-full px-3 py-2 text-xs text-slate-900 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-slate-800 font-medium cursor-pointer"
+            >
+              <option v-for="g in GAS_TYPES" :key="g.type" :value="g.type">
+                {{ g.type }} (Đơn giá chuẩn: {{ formatCurrency(g.defaultPrice) }})
+              </option>
+            </select>
           </div>
 
-          <!-- 3. Quantity & Unit Price Stepper -->
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">
-                Số Lượng Bình <span class="text-rose-500">*</span>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">
+                Số Lượng <span class="text-rose-500">*</span>
               </label>
-              <div 
-                class="flex items-center border rounded-xl bg-slate-50 overflow-hidden"
-                :class="errors.quantity ? 'border-rose-500 bg-rose-50/20' : 'border-slate-200'"
-              >
-                <button 
-                  type="button" 
-                  @click="form.quantity = Math.max(1, form.quantity - 1); delete errors.quantity"
-                  class="px-3 py-2 text-slate-600 hover:bg-slate-200 font-bold transition-colors active:scale-95"
-                >
-                  -
-                </button>
-                <input 
-                  type="number" 
-                  min="1" 
-                  max="100" 
-                  v-model.number="form.quantity" 
-                  @input="delete errors.quantity"
-                  class="w-full text-center py-2 text-xs font-bold text-slate-900 bg-transparent focus:outline-none"
-                />
-                <button 
-                  type="button" 
-                  @click="form.quantity = form.quantity + 1; delete errors.quantity"
-                  class="px-3 py-2 text-slate-600 hover:bg-slate-200 font-bold transition-colors active:scale-95"
-                >
-                  +
-                </button>
-              </div>
-              <p v-if="errors.quantity" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
-                <span>⚠️</span> {{ errors.quantity }}
+              <input 
+                type="number" 
+                min="1" 
+                v-model.number="form.quantity" 
+                @input="delete errors.quantity"
+                :class="[
+                  'w-full px-3 py-2 text-xs text-slate-900 bg-white border rounded-lg focus:outline-none transition-colors font-medium',
+                  errors.quantity ? 'border-rose-500 bg-rose-50/20' : 'border-slate-300 focus:border-slate-800'
+                ]"
+              />
+              <p v-if="errors.quantity" class="text-xs text-rose-600 mt-1 font-medium">
+                {{ errors.quantity }}
               </p>
             </div>
 
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">
                 Đơn Giá (VNĐ) <span class="text-rose-500">*</span>
               </label>
               <input 
                 type="number" 
-                step="5000"
+                step="1000" 
                 v-model.number="form.unitPrice" 
                 @input="delete errors.unitPrice"
                 :class="[
-                  'w-full px-3 py-2 text-xs font-semibold text-slate-800 bg-slate-50 border rounded-xl focus:bg-white focus:outline-none transition-all',
-                  errors.unitPrice ? 'border-rose-500 bg-rose-50/20 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500' : 'border-slate-200 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500'
+                  'w-full px-3 py-2 text-xs text-slate-900 bg-white border rounded-lg focus:outline-none transition-colors font-medium',
+                  errors.unitPrice ? 'border-rose-500 bg-rose-50/20' : 'border-slate-300 focus:border-slate-800'
                 ]"
               />
-              <p v-if="errors.unitPrice" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
-                <span>⚠️</span> {{ errors.unitPrice }}
+              <p v-if="errors.unitPrice" class="text-xs text-rose-600 mt-1 font-medium">
+                {{ errors.unitPrice }}
               </p>
             </div>
           </div>
 
-          <!-- Total Calculation Display -->
-          <div class="p-3 bg-slate-100/80 rounded-xl flex items-center justify-between">
-            <span class="text-xs font-medium text-slate-600">Thành tiền tạm tính:</span>
-            <span class="text-base font-black text-slate-900 tracking-tight">
-              {{ formatCurrency(computedTotal) }}
-            </span>
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between text-xs font-bold text-slate-800">
+            <span>Tổng Tiền Hóa Đơn:</span>
+            <span class="text-sm font-extrabold text-slate-900">{{ formatCurrency(calculatedTotal) }}</span>
           </div>
 
-          <!-- 4. Payment Status (Đã thu tiền / Ghi nợ) -->
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1.5">
-              Trạng Thái Thanh Toán <span class="text-rose-500">*</span>
-            </label>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Trạng Thái Thanh Toán</label>
             <div class="grid grid-cols-2 gap-2">
-              <label 
-                class="flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all text-xs font-bold"
-                :class="form.paymentStatus === 'PAID' 
-                  ? 'border-emerald-500 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-500/20' 
-                  : (errors.paymentStatus ? 'border-rose-300 bg-white text-slate-600' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50')"
+              <button
+                type="button"
+                @click="form.paymentStatus = 'PAID'"
+                class="py-2 px-3 rounded-lg border text-xs font-semibold transition-colors"
+                :class="form.paymentStatus === 'PAID' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-white text-slate-600 border-slate-300'"
               >
-                <input type="radio" value="PAID" v-model="form.paymentStatus" @change="delete errors.paymentStatus" class="sr-only" />
-                <span class="text-sm">✅</span>
-                <span>Khách Đã Trả Tiền</span>
-              </label>
-
-              <label 
-                class="flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all text-xs font-bold"
-                :class="form.paymentStatus === 'DEBT' 
-                  ? 'border-rose-500 bg-rose-50 text-rose-800 ring-2 ring-rose-500/20' 
-                  : (errors.paymentStatus ? 'border-rose-300 bg-white text-slate-600' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50')"
+                Đã Thu Tiền Mặt
+              </button>
+              <button
+                type="button"
+                @click="form.paymentStatus = 'DEBT'"
+                class="py-2 px-3 rounded-lg border text-xs font-semibold transition-colors"
+                :class="form.paymentStatus === 'DEBT' ? 'bg-rose-50 text-rose-800 border-rose-300' : 'bg-white text-slate-600 border-slate-300'"
               >
-                <input type="radio" value="DEBT" v-model="form.paymentStatus" @change="delete errors.paymentStatus" class="sr-only" />
-                <span class="text-sm">⚠️</span>
-                <span>Ghi Nợ (Chưa Thu)</span>
-              </label>
+                Ghi Nợ Khách Hàng
+              </button>
             </div>
-            <p v-if="errors.paymentStatus" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
-              <span>⚠️</span> {{ errors.paymentStatus }}
-            </p>
           </div>
 
-          <!-- 5. Notes -->
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Ghi Chú Giao Hàng</label>
-            <textarea 
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Ghi Chú Đơn Hàng</label>
+            <input 
+              type="text" 
               v-model="form.notes" 
-              rows="2"
-              placeholder="VD: Giao lên lầu 2, đổi bình gas cũ rỉ sét, hẹn 18h quay lại lấy tiền..."
-              class="w-full px-3.5 py-2 text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all placeholder:text-slate-400 font-medium"
-            ></textarea>
+              placeholder="VD: Hẹn 17h thu tiền, đổi van an toàn..."
+              class="w-full px-3 py-2 text-xs text-slate-900 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-slate-800 font-medium"
+            />
           </div>
 
-          <!-- Form Buttons -->
-          <div class="pt-2 flex items-center justify-end gap-2">
+          <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
             <button 
               type="button" 
-              @click="closeModal" 
-              class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
+              @click="closeModal"
+              class="px-3.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
             >
               Hủy
             </button>
             <button 
               type="submit" 
-              :disabled="formSubmitting"
-              class="px-5 py-2 text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 active:scale-95 rounded-xl shadow-sm transition-all"
+              :disabled="submitting"
+              class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors"
             >
-              {{ formSubmitting ? 'Đang lưu...' : (modal.isEdit ? 'Lưu Thay Đổi' : 'Xác Nhận Lưu Phiếu') }}
+              {{ modal.isEdit ? 'Lưu Thay Đổi' : 'Lưu Phiếu Giao' }}
             </button>
           </div>
         </form>
@@ -461,28 +342,23 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import EmployeeLayout from '../components/layout/EmployeeLayout.vue'
-import { deliveryReportService, GAS_TYPES } from '../services/deliveryReportService'
+import deliveryReportService, { GAS_TYPES } from '../services/deliveryReportService.js'
 
-// State
+const selectedDate = ref(new Date().toISOString().substring(0, 10))
 const reports = ref([])
 const loading = ref(false)
-const isMockData = ref(false)
-const formSubmitting = ref(false)
-const selectedDate = ref(new Date().toISOString().split('T')[0])
-const errors = ref({})
-
-// Filters
+const submitting = ref(false)
 const searchKeyword = ref('')
 const filterStatus = ref('')
+const isMockData = ref(false)
+const errors = ref({})
 
-// Modal state
 const modal = reactive({
   isOpen: false,
   isEdit: false,
-  currentId: null
+  editingId: null
 })
 
-// Form state
 const form = reactive({
   customerName: '',
   containerType: 'Bình 12kg Xám',
@@ -492,201 +368,167 @@ const form = reactive({
   notes: ''
 })
 
-// Client validation
-const validateForm = () => {
-  const errs = {}
-  if (!form.customerName || !form.customerName.trim()) {
-    errs.customerName = 'Vui lòng nhập tên khách hàng'
-  } else if (form.customerName.trim().length < 2) {
-    errs.customerName = 'Tên khách hàng tối thiểu 2 ký tự'
-  }
-
-  if (!form.containerType) {
-    errs.containerType = 'Vui lòng chọn loại bình gas'
-  }
-
-  if (form.quantity === null || form.quantity === undefined || Number(form.quantity) < 1) {
-    errs.quantity = 'Số lượng bình phải lớn hơn hoặc bằng 1'
-  }
-
-  if (form.unitPrice === null || form.unitPrice === undefined || Number(form.unitPrice) < 0) {
-    errs.unitPrice = 'Đơn giá không được để trống hoặc âm'
-  }
-
-  if (!form.paymentStatus) {
-    errs.paymentStatus = 'Vui lòng chọn trạng thái thanh toán'
-  }
-
-  errors.value = errs
-  return Object.keys(errs).length === 0
-}
-
-// Computed Total
-const computedTotal = computed(() => {
-  return (Number(form.quantity) || 0) * (Number(form.unitPrice) || 0)
+const calculatedTotal = computed(() => {
+  return (form.quantity || 0) * (form.unitPrice || 0)
 })
 
-// Filtered reports
-const filteredReports = computed(() => {
-  return reports.value.filter(item => {
-    if (searchKeyword.value.trim()) {
-      const kw = searchKeyword.value.toLowerCase().trim()
-      const matchName = item.customerName && item.customerName.toLowerCase().includes(kw)
-      const matchNotes = item.notes && item.notes.toLowerCase().includes(kw)
-      if (!matchName && !matchNotes) return false
-    }
-
-    if (filterStatus.value && item.paymentStatus !== filterStatus.value) {
-      return false
-    }
-
-    return true
-  })
-})
-
-// Debt Bills Count
-const debtBillsCount = computed(() => {
-  return reports.value.filter(r => r.paymentStatus === 'DEBT').length
-})
-
-// Summary Stats
 const stats = computed(() => {
-  const totalQuantity = reports.value.reduce((sum, r) => sum + (Number(r.quantity) || 0), 0)
-  const totalAmount = reports.value.reduce((sum, r) => sum + (Number(r.total) || 0), 0)
+  const totalQuantity = reports.value.reduce((sum, r) => sum + (r.quantity || 0), 0)
+  const totalAmount = reports.value.reduce((sum, r) => sum + (r.total || 0), 0)
   const paidAmount = reports.value
     .filter(r => r.paymentStatus === 'PAID')
-    .reduce((sum, r) => sum + (Number(r.total) || 0), 0)
-  const debtAmount = totalAmount - paidAmount
+    .reduce((sum, r) => sum + (r.total || 0), 0)
+  const debtAmount = reports.value
+    .filter(r => r.paymentStatus === 'DEBT')
+    .reduce((sum, r) => sum + (r.total || 0), 0)
 
   return { totalQuantity, totalAmount, paidAmount, debtAmount }
 })
 
-// Methods
-const fetchReports = async () => {
+const debtBillsCount = computed(() => {
+  return reports.value.filter(r => r.paymentStatus === 'DEBT').length
+})
+
+const filteredReports = computed(() => {
+  return reports.value.filter(item => {
+    const matchStatus = !filterStatus.value || item.paymentStatus === filterStatus.value
+    const kw = searchKeyword.value.toLowerCase().trim()
+    const matchKw = !kw || 
+      (item.customerName && item.customerName.toLowerCase().includes(kw)) ||
+      (item.notes && item.notes.toLowerCase().includes(kw))
+    return matchStatus && matchKw
+  })
+})
+
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0)
+}
+
+function onSelectGasTypeChange() {
+  const found = GAS_TYPES.find(g => g.type === form.containerType)
+  if (found) {
+    form.unitPrice = found.defaultPrice
+  }
+}
+
+async function fetchReports() {
   loading.value = true
   try {
     const res = await deliveryReportService.getTodayReports(selectedDate.value)
-    reports.value = res.data || []
-    isMockData.value = !!res.isMock
+    if (res && res.data) {
+      reports.value = res.data
+      isMockData.value = res.isMock
+    } else {
+      reports.value = []
+    }
   } catch (err) {
-    console.error('Lỗi khi tải phiếu giao:', err)
+    console.warn('Lỗi lấy báo cáo:', err)
   } finally {
     loading.value = false
   }
 }
 
-const selectGasType = (g) => {
-  form.containerType = g.type
-  form.unitPrice = g.defaultPrice
+function validateForm() {
+  const errs = {}
+  if (!form.customerName || !form.customerName.trim()) {
+    errs.customerName = 'Vui lòng nhập tên khách hàng'
+  }
+  if (!form.containerType) {
+    errs.containerType = 'Vui lòng chọn loại bình gas'
+  }
+  if (!form.quantity || form.quantity < 1) {
+    errs.quantity = 'Số lượng bình phải lớn hơn hoặc bằng 1'
+  }
+  if (!form.unitPrice || form.unitPrice < 1000) {
+    errs.unitPrice = 'Đơn giá không hợp lệ'
+  }
+  errors.value = errs
+  return Object.keys(errs).length === 0
 }
 
-const openCreateModal = () => {
+function openCreateModal() {
   modal.isOpen = true
   modal.isEdit = false
-  modal.currentId = null
+  modal.editingId = null
   errors.value = {}
-  Object.assign(form, {
-    customerName: '',
-    containerType: 'Bình 12kg Xám',
-    quantity: 1,
-    unitPrice: 350000,
-    paymentStatus: 'PAID',
-    notes: ''
-  })
+  form.customerName = ''
+  form.containerType = 'Bình 12kg Xám'
+  form.quantity = 1
+  form.unitPrice = 350000
+  form.paymentStatus = 'PAID'
+  form.notes = ''
 }
 
-const openEditModal = (item) => {
+function openEditModal(item) {
   modal.isOpen = true
   modal.isEdit = true
-  modal.currentId = item.id
+  modal.editingId = item.id
   errors.value = {}
-  Object.assign(form, {
-    customerName: item.customerName,
-    containerType: item.containerType,
-    quantity: item.quantity,
-    unitPrice: item.unitPrice,
-    paymentStatus: item.paymentStatus,
-    notes: item.notes || ''
-  })
+  form.customerName = item.customerName
+  form.containerType = item.containerType
+  form.quantity = item.quantity
+  form.unitPrice = item.unitPrice
+  form.paymentStatus = item.paymentStatus
+  form.notes = item.notes || ''
 }
 
-const closeModal = () => {
+function closeModal() {
   modal.isOpen = false
   errors.value = {}
 }
 
-const handleSubmitForm = async () => {
-  if (!validateForm()) {
-    return
-  }
+async function handleSubmitForm() {
+  if (!validateForm()) return
 
-  formSubmitting.value = true
+  submitting.value = true
+  errors.value = {}
   try {
     const payload = {
-      ...form,
-      total: computedTotal.value,
-      reportDate: selectedDate.value
+      customerName: form.customerName.trim(),
+      containerType: form.containerType,
+      quantity: form.quantity,
+      unitPrice: form.unitPrice,
+      paymentStatus: form.paymentStatus,
+      reportDate: selectedDate.value,
+      notes: form.notes ? form.notes.trim() : ''
     }
 
     if (modal.isEdit) {
-      await deliveryReportService.updateReport(modal.currentId, payload)
+      await deliveryReportService.updateReport(modal.editingId, payload)
     } else {
       await deliveryReportService.createReport(payload)
     }
+
     closeModal()
-    fetchReports()
+    await fetchReports()
   } catch (err) {
     if (err.fieldErrors && Object.keys(err.fieldErrors).length > 0) {
-      errors.value = { ...err.fieldErrors }
+      errors.value = err.fieldErrors
     } else {
-      errors.value.general = err.message || 'Thao tác thất bại, vui lòng kiểm tra lại!'
+      errors.value = { general: err.message || 'Lưu phiếu giao thất bại' }
     }
   } finally {
-    formSubmitting.value = false
+    submitting.value = false
   }
 }
 
-const handleTogglePayment = async (item) => {
-  const nextStatus = item.paymentStatus === 'PAID' ? 'Ghi Nợ' : 'Đã Thu Tiền'
-  if (confirm(`Chuyển trạng thái đơn của [${item.customerName}] sang "${nextStatus}"?`)) {
-    try {
-      await deliveryReportService.togglePaymentStatus(item.id)
-      fetchReports()
-    } catch (err) {
-      alert('Không thể cập nhật trạng thái: ' + err.message)
-    }
+async function handleTogglePayment(item) {
+  try {
+    await deliveryReportService.togglePaymentStatus(item.id)
+    await fetchReports()
+  } catch (err) {
+    console.error('Không thể đổi trạng thái thu tiền:', err)
   }
 }
 
-const handleDelete = async (item) => {
-  if (confirm(`Xác nhận xóa phiếu giao cho khách [${item.customerName}]?`)) {
-    try {
-      await deliveryReportService.deleteReport(item.id)
-      fetchReports()
-    } catch (err) {
-      alert('Không thể xóa phiếu: ' + err.message)
-    }
+async function handleDelete(item) {
+  if (!confirm(`Xác nhận xóa phiếu giao cho khách "${item.customerName}"?`)) return
+  try {
+    await deliveryReportService.deleteReport(item.id)
+    await fetchReports()
+  } catch (err) {
+    alert(err.message || 'Xóa phiếu thất bại')
   }
-}
-
-// Formatters & UI Helpers
-const formatCurrency = (val) => {
-  if (val === null || val === undefined) return '0 ₫'
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
-}
-
-const getContainerPillClass = (type) => {
-  if (type.includes('45kg')) return 'bg-amber-50 text-amber-900 border-amber-200'
-  if (type.includes('Đỏ')) return 'bg-rose-50 text-rose-900 border-rose-200'
-  if (type.includes('Mini')) return 'bg-purple-50 text-purple-900 border-purple-200'
-  return 'bg-slate-100 text-slate-800 border-slate-200'
-}
-
-const getContainerDotClass = (type) => {
-  if (type.includes('45kg')) return 'bg-amber-500'
-  if (type.includes('Đỏ')) return 'bg-rose-500'
-  if (type.includes('Mini')) return 'bg-purple-500'
-  return 'bg-slate-400'
 }
 
 onMounted(() => {

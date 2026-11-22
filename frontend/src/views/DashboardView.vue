@@ -1,76 +1,90 @@
 <template>
-  <AppLayout>
-    <div class="page-header">
-      <div class="page-title">
-        <h2>📊 Tổng Quan Hệ Thống OriginGas Enterprise</h2>
-        <p>Bảng điều khiển trung tâm và định hướng các phân hệ nghiệp vụ</p>
+  <EmployeeLayout>
+    <!-- Top Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+          <h2 class="text-xl font-bold tracking-tight text-slate-900">Tổng Quan Hệ Thống</h2>
+        </div>
+        <p class="text-xs text-slate-500 mt-0.5">Trung tâm điều hành và điều hướng các phân hệ nghiệp vụ công ty</p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-500 font-medium">Phiên bản: <strong class="text-slate-800">2026 Enterprise</strong></span>
       </div>
     </div>
 
-    <!-- Quick Stats -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon primary">👥</div>
-        <div class="stat-info">
-          <p>Nhân Sự</p>
-          <h3>Phân Hệ Quản Lý</h3>
-        </div>
+    <!-- Quick Metrics -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6">
+      <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-xs">
+        <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Nhân Sự</div>
+        <div class="text-lg font-bold text-slate-900">Quản Lý & Phân Quyền</div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-icon warning">📦</div>
-        <div class="stat-info">
-          <p>Kho Gas</p>
-          <h3>Tồn Kho & Cảnh Báo</h3>
-        </div>
+      <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-xs">
+        <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Kho Bãi</div>
+        <div class="text-lg font-bold text-slate-900">Tồn Kho & Cảnh Báo</div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-icon success">📝</div>
-        <div class="stat-info">
-          <p>Giao Gas</p>
-          <h3>Sổ Nợ & Báo Cáo</h3>
-        </div>
+      <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-xs">
+        <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Giao Vận</div>
+        <div class="text-lg font-bold text-slate-900">Sổ Nợ & Quyết Toán</div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-icon danger">💰</div>
-        <div class="stat-info">
-          <p>Lương Bổng</p>
-          <h3>Công Thức SpEL</h3>
-        </div>
+      <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-xs">
+        <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Lương Thưởng</div>
+        <div class="text-lg font-bold text-slate-900">Công Thức SpEL</div>
       </div>
     </div>
 
-    <!-- Navigation Hub Cards -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
-      <div class="content-card" style="padding: 1.5rem;">
-        <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">
-          👥 Phân Hệ Quản Lý Nhân Viên (Employment)
-        </h3>
-        <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 1.25rem;">
-          Trang đã sẵn sàng với bộ lọc, tìm kiếm, thêm mới, sửa và phân quyền tài khoản (Admin / Employee).
-        </p>
-        <router-link to="/employment" class="btn btn-primary">
-          Đi đến Trang Nhân Viên &rarr;
-        </router-link>
+    <!-- Navigation Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 mb-1.5 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-slate-700"></span>
+            Phân Hệ Giao Gas & Thu Tiền
+          </h3>
+          <p class="text-xs text-slate-600 leading-relaxed mb-4">
+            Theo dõi danh sách các đơn giao trong ngày, kiểm tra công nợ khách hàng, số lượng bình giao và đổi trạng thái thanh toán.
+          </p>
+        </div>
+        <div>
+          <router-link 
+            to="/employment" 
+            class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors"
+          >
+            <span>Vào Phân Hệ Giao Gas</span>
+            <span>&rarr;</span>
+          </router-link>
+        </div>
       </div>
 
-      <div class="content-card" style="padding: 1.5rem;">
-        <h3 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">
-          🔌 Kết Nối Backend RESTful API
-        </h3>
-        <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem;">
-          • Base URL: <code>http://localhost:8080/api/v1</code><br>
-          • API Nhân viên: <code>/api/v1/users</code> hoặc <code>/api/v1/employees</code><br>
-          • Đã mở CORS và tích hợp sẵn DTO chuẩn <code>ApiResponse&lt;T&gt;</code>.
-        </p>
+      <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 mb-1.5 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-slate-700"></span>
+            Danh Bạ Khách Hàng & Bản Đồ GPS
+          </h3>
+          <p class="text-xs text-slate-600 leading-relaxed mb-4">
+            Quản lý cơ sở dữ liệu khách hàng, lưu tọa độ GPS vị trí giao gas để dẫn đường cho tài xế và nhân viên.
+          </p>
+        </div>
+        <div>
+          <router-link 
+            to="/customers" 
+            class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors"
+          >
+            <span>Xem Danh Bạ Khách</span>
+            <span>&rarr;</span>
+          </router-link>
+        </div>
       </div>
     </div>
-  </AppLayout>
+  </EmployeeLayout>
 </template>
 
 <script setup>
-import AppLayout from '../components/layout/AppLayout.vue'
+import EmployeeLayout from '../components/layout/EmployeeLayout.vue'
 </script>
-

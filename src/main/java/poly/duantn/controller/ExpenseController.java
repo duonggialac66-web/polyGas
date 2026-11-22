@@ -45,15 +45,18 @@ public class ExpenseController {
 
     /**
      * Xem các khoản chi trong ngày của shipper
-     * GET /api/v1/expenses/daily?employeeId=...&date=...
+     * GET /api/v1/expenses hoặc GET /api/v1/expenses/daily
      */
-    @GetMapping("/daily")
+    @GetMapping({"", "/daily"})
     public ResponseEntity<ApiResponse<List<ExpenseResponse>>> getDailyExpenses(
-            @RequestParam UUID employeeId,
+            @RequestParam(required = false) UUID employeeId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        log.info("API GET /api/v1/expenses/daily - employeeId: {}, date: {}", employeeId, date);
-        List<ExpenseResponse> expenses = expenseService.getDailyExpenses(employeeId, date);
+        log.info("API GET /api/v1/expenses - employeeId: {}, date: {}", employeeId, date);
+        LocalDate queryDate = date != null ? date : LocalDate.now();
+        List<ExpenseResponse> expenses = (employeeId != null) 
+                ? expenseService.getDailyExpenses(employeeId, queryDate)
+                : expenseService.getExpensesByDate(queryDate);
         return ResponseEntity.ok(ApiResponse.ok(expenses, "Lấy danh sách chi phí trong ngày thành công"));
     }
 }

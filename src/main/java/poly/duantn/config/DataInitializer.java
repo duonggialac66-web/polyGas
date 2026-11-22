@@ -34,15 +34,9 @@ public class DataInitializer implements CommandLineRunner {
             seedInventories();
             seedSalaryConfigs();
             seedSalaryFormula();
-<<<<<<< HEAD
-            log.info(">>> [OriginGas Enterprise] Đã nạp thành công toàn bộ dữ liệu nền tảng với Khóa Ngoại chuẩn vào CSDL!");
-        } catch (Exception e) {
-            log.warn(">>> [OriginGas Enterprise] Khởi tạo dữ liệu nền: {}", e.getMessage());
-=======
             log.info(">>> [OriginGas Enterprise] Đã kiểm tra và nạp thành công dữ liệu mẫu vào CSDL!");
         } catch (Exception e) {
             log.warn(">>> [OriginGas Enterprise] Dữ liệu mẫu đã tồn tại hoặc xảy ra cảnh báo: {}", e.getMessage());
->>>>>>> 88a6459825e200b053e54832e6c889ccf80126a6
         }
     }
 
@@ -96,11 +90,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private void seedInventoryItem(String type, int full, int empty, int warning) {
         try {
-<<<<<<< HEAD
-            if (!inventoryRepository.existsByContainerType(type)) {
-=======
             if (inventoryRepository.findByContainerType(type).isEmpty() && !inventoryRepository.existsByContainerType(type)) {
->>>>>>> 88a6459825e200b053e54832e6c889ccf80126a6
                 Inventory item = Inventory.builder()
                         .containerType(type)
                         .fullQuantity(full)
@@ -111,11 +101,7 @@ public class DataInitializer implements CommandLineRunner {
                 log.info("-> Đã nạp tồn kho mẫu cho loại: {}", type);
             }
         } catch (Exception ex) {
-<<<<<<< HEAD
-            log.warn("-> Bỏ qua nạp tồn kho loại [{}]: {}", type, ex.getMessage());
-=======
             log.warn("-> Tồn kho cho loại '{}' đã tồn tại trong CSDL, bỏ qua.", type);
->>>>>>> 88a6459825e200b053e54832e6c889ccf80126a6
         }
     }
 
@@ -148,21 +134,13 @@ public class DataInitializer implements CommandLineRunner {
                 }
             }
         } catch (Exception ex) {
-<<<<<<< HEAD
-            log.warn("-> Bỏ qua nạp cấu hình hoa hồng [{}]: {}", type, ex.getMessage());
-=======
             log.warn("-> Cấu hình hoa hồng cho '{}' đã tồn tại, bỏ qua.", type);
->>>>>>> 88a6459825e200b053e54832e6c889ccf80126a6
         }
     }
 
     private void seedSalaryFormula() {
         try {
-<<<<<<< HEAD
-            if (salaryFormulaRepository.count() == 0 && salaryFormulaRepository.findByIsActiveTrue().isEmpty()) {
-=======
             if (salaryFormulaRepository.findByIsActiveTrue().isEmpty()) {
->>>>>>> 88a6459825e200b053e54832e6c889ccf80126a6
                 SalaryFormula formula = SalaryFormula.builder()
                         .name("Công thức lương chuẩn OriginGas 2026")
                         .formulaExpression("(#baseSalary / 26 * #workDays) + (#commissionTotal * #overtime) + #bonus")
@@ -174,11 +152,7 @@ public class DataInitializer implements CommandLineRunner {
                 log.info("-> Đã nạp công thức tính lương SpEL chuẩn vào CSDL");
             }
         } catch (Exception ex) {
-<<<<<<< HEAD
-            log.warn("-> Bỏ qua nạp công thức lương: {}", ex.getMessage());
-=======
             log.warn("-> Công thức tính lương đã tồn tại, bỏ qua.");
->>>>>>> 88a6459825e200b053e54832e6c889ccf80126a6
         }
     }
 }

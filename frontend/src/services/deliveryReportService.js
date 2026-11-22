@@ -57,7 +57,7 @@ export const deliveryReportService = {
    */
   async getTodayReports(date) {
     try {
-      const res = await apiClient.get('/employment/today', { params: { date } })
+      const res = await apiClient.get('/delivery-reports/today', { params: { date } })
       if (res && res.data) {
         return { data: res.data, isMock: false }
       }
@@ -75,7 +75,7 @@ export const deliveryReportService = {
    */
   async createReport(reportData) {
     try {
-      const res = await apiClient.post('/employment', reportData)
+      const res = await apiClient.post('/delivery-reports', reportData)
       return res.data
     } catch (err) {
       console.warn('Tạo phiếu ở chế độ Mock:', err.message)
@@ -98,7 +98,7 @@ export const deliveryReportService = {
    */
   async updateReport(id, reportData) {
     try {
-      const res = await apiClient.put(`/employment/${id}`, reportData)
+      const res = await apiClient.put(`/delivery-reports/${id}`, reportData)
       return res.data
     } catch (err) {
       console.warn('Cập nhật phiếu ở chế độ Mock:', err.message)
@@ -117,7 +117,7 @@ export const deliveryReportService = {
    */
   async togglePaymentStatus(id) {
     try {
-      const res = await apiClient.patch(`/employment/${id}/toggle-payment`)
+      const res = await apiClient.patch(`/delivery-reports/${id}/toggle-payment`)
       return res.data
     } catch (err) {
       const item = MOCK_REPORTS.find(r => r.id === id)
@@ -134,7 +134,7 @@ export const deliveryReportService = {
    */
   async deleteReport(id) {
     try {
-      const res = await apiClient.delete(`/employment/${id}`)
+      const res = await apiClient.delete(`/delivery-reports/${id}`)
       return res
     } catch (err) {
       const index = MOCK_REPORTS.findIndex(r => r.id === id)
@@ -173,4 +173,7 @@ export const deliveryReportService = {
     }
   }
 }
+
+export default deliveryReportService
+
 
