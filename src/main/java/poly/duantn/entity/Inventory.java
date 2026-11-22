@@ -19,7 +19,7 @@ public class Inventory {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "container_type", nullable = false, unique = true, length = 100)
+    @Column(name = "container_type", nullable = false, unique = true, length = 100, columnDefinition = "NVARCHAR(100)")
     private String containerType;
 
     @Column(name = "full_quantity", nullable = false)

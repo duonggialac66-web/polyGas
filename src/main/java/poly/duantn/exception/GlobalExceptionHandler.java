@@ -1,8 +1,13 @@
 package poly.duantn.exception;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,74 +18,120 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Lớp bắt và chuẩn hóa toàn bộ lỗi ngoại lệ trong ứng dụng (Global Exception Handler)
- * Tự động trích xuất lỗi Bean Validation (@Valid) và ném về ApiResponse chuẩn cho Frontend.
+ * Bộ xử lý ngoại lệ toàn cục cho toàn bộ hệ thống RESTful API
+ * Đảm bảo mọi lỗi (Validation, JWT, Nghiệp vụ, 404, 500) đều trả về chuẩn ApiResponse<T>
  */
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 
     /**
-     * Bắt toàn bộ lỗi vi phạm Bean Validation (@Valid trên DTOs)
-     * Trả về HTTP 400 Bad Request kèm chi tiết từng trường bị lỗi
+     * Bắt lỗi Validation form (@Valid, @NotNull, @NotBlank,...)
+     * Trả về map field -> message để frontend hiển thị lỗi dưới từng ô input
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-
-        // Lấy thông báo lỗi đầu tiên để hiển thị nhanh trên Alert / Toast của Frontend
+        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+            errors.put(error.getField(), error.getDefaultMessage());
+        }
         String firstMessage = errors.values().stream().findFirst().orElse("Dữ liệu gửi lên không hợp lệ");
-
-        log.warn(">>> [Bean Validation Error] {}: {}", firstMessage, errors);
-
-        ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
-                .success(false)
-                .message(firstMessage)
-                .data(errors)
-                .build();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        log.warn("Form validation errors: {}", errors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.<Map<String, String>>builder()
+                        .success(false)
+                        .message(firstMessage)
+                        .data(errors)
+                        .build());
     }
 
     /**
-     * Bắt lỗi nghiệp vụ BadRequestException (ví dụ: Thiếu bình trong kho, dữ liệu không hợp lệ)
+     * Bắt lỗi BadRequestException (400)
      */
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadRequestException(BadRequestException ex) {
-        log.warn(">>> [Bad Request Exception]: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
+        log.warn("BadRequestException: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     /**
-     * Bắt lỗi không tìm thấy tài nguyên (ResourceNotFoundException - 404)
+     * Bắt lỗi ResourceNotFoundException (404)
      */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex) {
-        log.warn(">>> [Resource Not Found]: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
+        log.warn("ResourceNotFoundException: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     /**
-     * Bắt lỗi AppException nội bộ hệ thống
+     * Bắt lỗi sai thông tin đăng nhập (401 BadCredentials)
+     */
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBadCredentialsException(BadCredentialsException ex) {
+        log.warn("BadCredentialsException: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("Tên đăng nhập hoặc mật khẩu không chính xác"));
+    }
+
+    /**
+     * Bắt lỗi không đủ quyền hạn truy cập (403 Forbidden)
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException ex) {
+        log.warn("AccessDeniedException: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("Bạn không có quyền thực hiện thao tác này"));
+    }
+
+    /**
+     * Bắt các lỗi nghiệp vụ chung kế thừa từ AppException
      */
     @ExceptionHandler(AppException.class)
     public ResponseEntity<ApiResponse<Void>> handleAppException(AppException ex) {
-        log.error(">>> [App Exception]: {}", ex.getMessage(), ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(ex.getMessage()));
+        log.error("AppException: status={}, message={}", ex.getStatus(), ex.getMessage());
+        return ResponseEntity.status(ex.getStatus())
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     /**
-     * Bắt các lỗi không xác định còn lại (500 Internal Server Error)
+     * Bắt lỗi JWT token hết hạn (401)
+     */
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<ApiResponse<Void>> handleExpiredJwtException(ExpiredJwtException ex) {
+        log.warn("JWT token đã hết hạn: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại"));
+    }
+
+    /**
+     * Bắt lỗi JWT không hợp lệ (401)
+     */
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ApiResponse<Void>> handleJwtException(JwtException ex) {
+        log.warn("JWT không hợp lệ: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("Token xác thực không hợp lệ"));
+    }
+
+    /**
+     * Bắt lỗi xác thực chung (401)
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAuthenticationException(AuthenticationException ex) {
+        log.warn("AuthenticationException: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("Xác thực thất bại: " + ex.getMessage()));
+    }
+
+    /**
+     * Bắt toàn bộ các lỗi không lường trước (500 Internal Server Error)
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGlobalException(Exception ex) {
-        log.error(">>> [Uncaught System Error]: {}", ex.getMessage(), ex);
+    public ResponseEntity<ApiResponse<Void>> handleGeneralException(Exception ex) {
+        log.error("Unhandled Exception: ", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Lỗi hệ thống máy chủ: " + ex.getMessage()));
+                .body(ApiResponse.error("Lỗi máy chủ nội bộ: " + ex.getMessage()));
     }
 }

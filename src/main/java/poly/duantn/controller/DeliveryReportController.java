@@ -1,5 +1,6 @@
 package poly.duantn.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -25,8 +26,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * REST Controller cho Trang Nhân Viên Báo Cáo Giao Gas (Employment / Daily Delivery Report)
- * Cung cấp API ghi nhận số lượng bình giao trong ngày, khách hàng, đơn giá, thành tiền, nợ/đã thanh toán.
+ * REST Controller cho Quản lý Báo cáo Giao Gas & Sổ Nợ
+ * Chuẩn hóa URL RESTful resource: /api/v1/delivery-reports (hỗ trợ alias /api/v1/employment để backward compatible)
  */
 @RestController
 @RequestMapping({"/api/v1/delivery-reports", "/api/v1/employment"})
@@ -40,7 +41,7 @@ public class DeliveryReportController {
 
     /**
      * Lấy danh sách báo cáo giao gas trong ngày của nhân viên
-     * GET /api/v1/employment/today hoặc GET /api/v1/delivery-reports/today
+     * GET /api/v1/delivery-reports/today
      */
     @GetMapping("/today")
     public ResponseEntity<ApiResponse<List<DeliveryReportResponse>>> getTodayReports(
@@ -98,7 +99,7 @@ public class DeliveryReportController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<DeliveryReportResponse>> createReport(
-            @RequestBody DeliveryReportRequest request
+            @Valid @RequestBody DeliveryReportRequest request
     ) {
         if (request.getCustomerName() == null || request.getCustomerName().trim().isEmpty()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("Vui lòng nhập tên khách hàng"));
@@ -167,7 +168,7 @@ public class DeliveryReportController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<DeliveryReportResponse>> updateReport(
             @PathVariable UUID id,
-            @RequestBody DeliveryReportRequest request
+            @Valid @RequestBody DeliveryReportRequest request
     ) {
         return deliveryReportRepository.findById(id).map(report -> {
             if (request.getCustomerName() != null) report.setCustomerName(request.getCustomerName().trim());

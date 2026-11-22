@@ -70,7 +70,6 @@ export const deliveryReportService = {
    */
   async getTodayReports(date) {
     try {
-      // Ưu tiên gọi API chuẩn /delivery-reports
       let res
       try {
         res = await apiClient.get('/delivery-reports/today', { params: { date } })
@@ -100,7 +99,6 @@ export const deliveryReportService = {
       try {
         res = await apiClient.post('/delivery-reports', reportData)
       } catch (e) {
-        // Fallback thử /employment nếu backend cũ
         if (e.message && e.message.includes('404')) {
           res = await apiClient.post('/employment', reportData)
         } else {
@@ -287,5 +285,35 @@ export const deliveryReportService = {
       }
       return { success: true }
     }
+  },
+
+  /**
+   * Lấy lịch sử giao hàng theo khoảng ngày (fromDate, toDate)
+   * GET /api/v1/delivery-reports/history
+   */
+  async getDeliveryHistory(params = {}) {
+    try {
+      const res = await apiClient.get('/delivery-reports/history', { params })
+      return res.data || []
+    } catch (err) {
+      console.warn('Lỗi gọi API /delivery-reports/history:', err.message)
+      return []
+    }
+  },
+
+  /**
+   * Lấy số liệu đối soát nộp tiền mặt cuối ngày của shipper
+   * GET /api/v1/delivery-reports/daily-reconciliation
+   */
+  async getDailyReconciliation(params = {}) {
+    try {
+      const res = await apiClient.get('/delivery-reports/daily-reconciliation', { params })
+      return res.data || null
+    } catch (err) {
+      console.warn('Lỗi gọi API /delivery-reports/daily-reconciliation:', err.message)
+      return null
+    }
   }
 }
+
+export default deliveryReportService
