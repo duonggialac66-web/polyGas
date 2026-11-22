@@ -3,13 +3,13 @@
 -- KỊCH BẢN KHỞI TẠO CSDL MICROSOFT SQL SERVER CHUẨN 3NF & KHÓA NGOẠI HOÀN CHỈNH
 -- =========================================================================
 
-IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'OriginGasDB')
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'polyGasDB')
 BEGIN
-    CREATE DATABASE [OriginGasDB];
+    CREATE DATABASE [polyGasDB];
 END
 GO
 
-USE [OriginGasDB];
+USE [polyGasDB];
 GO
 
 -- 1. BẢNG USERS (Người dùng & Nhân viên)

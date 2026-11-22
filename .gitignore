@@ -44,3 +44,10 @@ Thumbs.db
 
 # Temporary scratch folder
 scratch/
+
+# Frontend Node dependencies & build output
+frontend/node_modules/
+frontend/dist/
+frontend/*.local
+frontend/.env.local
+
