@@ -3,14 +3,18 @@ package poly.duantn.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+<<<<<<< HEAD
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+=======
+>>>>>>> 88a6459825e200b053e54832e6c889ccf80126a6
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import poly.duantn.dto.ApiResponse;
 
+<<<<<<< HEAD
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,10 +22,13 @@ import java.util.Map;
  * Bộ xử lý ngoại lệ toàn cục cho toàn bộ hệ thống RESTful API
  * Đảm bảo mọi lỗi (Validation, JWT, Nghiệp vụ, 404, 500) đều trả về chuẩn ApiResponse<T>
  */
+=======
+>>>>>>> 88a6459825e200b053e54832e6c889ccf80126a6
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 
+<<<<<<< HEAD
     /**
      * Bắt lỗi BadRequestException (400)
      */
@@ -37,11 +44,16 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex) {
+=======
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNotFound(ResourceNotFoundException ex) {
+>>>>>>> 88a6459825e200b053e54832e6c889ccf80126a6
         log.warn("ResourceNotFoundException: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.error(ex.getMessage()));
     }
 
+<<<<<<< HEAD
     /**
      * Bắt lỗi Validation form (@Valid, @NotNull, @NotBlank,...)
      */
@@ -93,10 +105,30 @@ public class GlobalExceptionHandler {
     /**
      * Bắt toàn bộ các lỗi không lường trước (500 Internal Server Error)
      */
+=======
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBadRequest(BadRequestException ex) {
+        log.warn("BadRequestException: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(AppException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAppException(AppException ex) {
+        log.error("AppException: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+>>>>>>> 88a6459825e200b053e54832e6c889ccf80126a6
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneralException(Exception ex) {
         log.error("Unhandled Exception: ", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+<<<<<<< HEAD
                 .body(ApiResponse.error("Lỗi máy chủ nội bộ: " + ex.getMessage()));
+=======
+                .body(ApiResponse.error("Lỗi hệ thống: " + ex.getMessage()));
+>>>>>>> 88a6459825e200b053e54832e6c889ccf80126a6
     }
 }
