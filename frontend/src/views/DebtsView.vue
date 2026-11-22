@@ -1,56 +1,47 @@
 <template>
   <EmployeeLayout :debt-count="debtReports.length">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-5">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-200">
       <div>
-        <div class="flex items-center gap-2">
-          <span class="inline-block w-2 h-2 rounded-full bg-rose-500"></span>
-          <h2 class="text-xl font-extrabold tracking-tight text-slate-900">Sổ Nợ Cần Thu</h2>
-        </div>
-        <p class="text-xs text-slate-500 mt-0.5">Tổng hợp toàn bộ các đơn gas khách hàng chưa thanh toán để tiện đi thu tiền</p>
+        <h2 class="text-lg font-bold text-slate-900 tracking-tight">Sổ Theo Dõi Công Nợ Khách Hàng</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Danh sách các hóa đơn giao gas chưa thanh toán cần thu hồi tiền mặt</p>
       </div>
 
-      <!-- Total Debt Badge -->
-      <div class="px-3.5 py-1.5 bg-rose-50 border border-rose-200/80 rounded-2xl text-right">
+      <div class="px-4 py-2 bg-rose-50 border border-rose-200 rounded-lg text-right self-start sm:self-auto">
         <div class="text-[10px] font-bold uppercase tracking-wider text-rose-600">Tổng Nợ Cần Thu</div>
-        <div class="text-sm font-black text-rose-700 tracking-tight">{{ formatCurrency(totalDebtAmount) }}</div>
+        <div class="text-base font-extrabold text-rose-700">{{ formatCurrency(totalDebtAmount) }}</div>
       </div>
     </div>
 
-    <!-- Empty State if no debts -->
-    <div v-if="debtReports.length === 0" class="bg-white rounded-2xl border border-dashed border-slate-200 p-12 text-center">
-      <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl mx-auto mb-3">
-        🎉
-      </div>
-      <h3 class="text-sm font-bold text-slate-800">Không có hóa đơn nợ nào!</h3>
-      <p class="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-        Tất cả khách hàng đã thanh toán đầy đủ tiền gas.
-      </p>
+    <!-- Empty State -->
+    <div v-if="debtReports.length === 0" class="bg-white rounded-xl border border-dashed border-slate-300 p-12 text-center">
+      <h3 class="text-sm font-semibold text-slate-700">Hiện tại không có hóa đơn nợ nào</h3>
+      <p class="text-xs text-slate-500 mt-1">Toàn bộ khách hàng trong ca làm việc đã hoàn tất thanh toán.</p>
     </div>
 
-    <!-- Debt Bills List -->
-    <div v-else class="space-y-3">
+    <!-- Debt List -->
+    <div v-else class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs divide-y divide-slate-100">
       <div 
         v-for="item in debtReports" 
         :key="item.id"
-        class="bg-white p-4 rounded-2xl border border-rose-200/70 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+        class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
       >
         <div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 mb-1">
             <h4 class="text-sm font-bold text-slate-900">{{ item.customerName }}</h4>
-            <span class="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded text-[11px] font-semibold">
+            <span class="px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded text-[11px] font-semibold">
               {{ item.containerType }} (x{{ item.quantity }})
             </span>
           </div>
-          <div class="text-xs text-slate-500 mt-1">
-            Ngày giao: <span class="text-slate-700 font-medium">{{ item.reportDate }}</span>
+          <div class="text-xs text-slate-500">
+            Ngày xuất phiếu: <span class="text-slate-700 font-medium">{{ item.reportDate }}</span>
             <span v-if="item.notes" class="italic ml-2">"{{ item.notes }}"</span>
           </div>
         </div>
 
         <div class="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t border-slate-100 sm:border-0">
           <div class="text-left sm:text-right">
-            <div class="text-sm sm:text-base font-black text-rose-600 tracking-tight">
+            <div class="text-sm sm:text-base font-bold text-rose-600">
               {{ formatCurrency(item.total) }}
             </div>
             <div class="text-[10px] text-slate-400">Tiền còn nợ</div>
@@ -58,10 +49,9 @@
 
           <button 
             @click="markAsCollected(item)"
-            class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5"
+            class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors"
           >
-            <span>💰</span>
-            <span>Đã Thu Tiền</span>
+            Đã Thu Tiền
           </button>
         </div>
       </div>
@@ -72,37 +62,46 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import EmployeeLayout from '../components/layout/EmployeeLayout.vue'
-import { deliveryReportService } from '../services/deliveryReportService'
+import deliveryReportService from '../services/deliveryReportService.js'
 
-const reports = ref([])
+const allReports = ref([])
 
 const debtReports = computed(() => {
-  return reports.value.filter(r => r.paymentStatus === 'DEBT')
+  return allReports.value.filter(r => r.paymentStatus === 'DEBT')
 })
 
 const totalDebtAmount = computed(() => {
-  return debtReports.value.reduce((sum, r) => sum + (Number(r.total) || 0), 0)
+  return debtReports.value.reduce((sum, r) => sum + (r.total || 0), 0)
 })
 
-const loadReports = async () => {
-  const res = await deliveryReportService.getTodayReports()
-  reports.value = res.data || []
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0)
 }
 
-const markAsCollected = async (item) => {
-  if (confirm(`Xác nhận đã thu đủ ${formatCurrency(item.total)} từ khách [${item.customerName}]?`)) {
-    await deliveryReportService.togglePaymentStatus(item.id)
-    loadReports()
+async function loadDebts() {
+  try {
+    const res = await deliveryReportService.getTodayReports()
+    if (res && res.data) {
+      allReports.value = res.data
+    } else {
+      allReports.value = []
+    }
+  } catch (err) {
+    console.error('Lỗi tải sổ nợ:', err)
   }
 }
 
-const formatCurrency = (val) => {
-  if (val === null || val === undefined) return '0 ₫'
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val)
+async function markAsCollected(item) {
+  if (!confirm(`Xác nhận đã thu đủ tiền (${formatCurrency(item.total)}) từ khách "${item.customerName}"?`)) return
+  try {
+    await deliveryReportService.togglePaymentStatus(item.id)
+    await loadDebts()
+  } catch (err) {
+    alert('Không thể cập nhật trạng thái thu tiền: ' + err.message)
+  }
 }
 
 onMounted(() => {
-  loadReports()
+  loadDebts()
 })
 </script>
-

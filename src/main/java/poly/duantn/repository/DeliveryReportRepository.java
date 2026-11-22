@@ -1,6 +1,9 @@
 package poly.duantn.repository;
 
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,6 +16,21 @@ import java.util.UUID;
 
 @Repository
 public interface DeliveryReportRepository extends JpaRepository<DeliveryReport, UUID> {
+
+    /**
+     * Lấy danh sách báo cáo theo ngày và JOIN FETCH sẵn employee, inventory, customer
+     * Tránh triệt để LazyInitializationException và lỗi N+1 Query
+     */
+    @EntityGraph(attributePaths = {"employee", "inventory", "customer"})
+    @Query("SELECT d FROM DeliveryReport d WHERE d.reportDate = :reportDate ORDER BY d.createdAt DESC")
+    List<DeliveryReport> findAllByReportDateWithDetails(@Param("reportDate") LocalDate reportDate);
+
+    /**
+     * Lấy toàn bộ báo cáo có JOIN FETCH sẵn
+     */
+    @EntityGraph(attributePaths = {"employee", "inventory", "customer"})
+    @Query("SELECT d FROM DeliveryReport d ORDER BY d.createdAt DESC")
+    List<DeliveryReport> findAllWithDetails();
 
     /**
      * Lấy danh sách báo cáo giao gas của nhân viên trong ngày (tối ưu qua Index IX_DeliveryReports_Employee_Date)

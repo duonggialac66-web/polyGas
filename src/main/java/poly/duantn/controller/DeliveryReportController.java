@@ -1,10 +1,12 @@
 package poly.duantn.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import poly.duantn.dto.ApiResponse;
 import poly.duantn.dto.DailyReconciliationResponse;
@@ -15,6 +17,8 @@ import poly.duantn.entity.Inventory;
 import poly.duantn.entity.User;
 import poly.duantn.entity.enums.PaymentStatus;
 import poly.duantn.entity.enums.Role;
+import poly.duantn.exception.BadRequestException;
+import poly.duantn.exception.ResourceNotFoundException;
 import poly.duantn.repository.DeliveryReportRepository;
 import poly.duantn.repository.InventoryRepository;
 import poly.duantn.repository.UserRepository;
@@ -22,18 +26,18 @@ import poly.duantn.service.DeliveryReportService;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * REST Controller cho Trang Nhân Viên Báo Cáo Giao Gas (Employment / Daily Delivery Report)
- * Cung cấp API ghi nhận số lượng bình giao trong ngày, khách hàng, đơn giá, thành tiền, nợ/đã thanh toán.
+ * RESTful Controller quản lý báo cáo giao gas và công nợ shipper trong ngày
+ * Chuẩn hóa URL RESTful resource: /api/v1/delivery-reports (hỗ trợ alias /api/v1/employment)
  */
 @RestController
 @RequestMapping({"/api/v1/delivery-reports", "/api/v1/employment"})
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class DeliveryReportController {
 
     private final DeliveryReportRepository deliveryReportRepository;
@@ -72,7 +76,7 @@ public class DeliveryReportController {
 
     /**
      * Lấy danh sách báo cáo giao gas trong ngày của nhân viên
-     * GET /api/v1/employment/today hoặc GET /api/v1/delivery-reports/today
+     * GET /api/v1/delivery-reports/today
      */
     @GetMapping("/today")
     public ResponseEntity<ApiResponse<List<DeliveryReportResponse>>> getTodayReports(
@@ -81,9 +85,7 @@ public class DeliveryReportController {
         LocalDate queryDate = (date != null) ? date : LocalDate.now();
         log.info("Lấy danh sách báo cáo giao gas ngày: {}", queryDate);
 
-        List<DeliveryReport> reports = deliveryReportRepository.findAll().stream()
-                .filter(r -> queryDate.equals(r.getReportDate()))
-                .collect(Collectors.toList());
+        List<DeliveryReport> reports = deliveryReportRepository.findAllByReportDateWithDetails(queryDate);
 
         List<DeliveryReportResponse> responses = reports.stream()
                 .map(DeliveryReportResponse::fromEntity)
@@ -94,14 +96,14 @@ public class DeliveryReportController {
 
     /**
      * Lấy tất cả báo cáo giao hàng (có thể lọc theo trạng thái PAID/DEBT)
-     * GET /api/v1/employment
+     * GET /api/v1/delivery-reports
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<DeliveryReportResponse>>> getAllReports(
             @RequestParam(required = false) PaymentStatus status,
             @RequestParam(required = false) String keyword
     ) {
-        List<DeliveryReport> reports = deliveryReportRepository.findAll();
+        List<DeliveryReport> reports = deliveryReportRepository.findAllWithDetails();
 
         if (status != null) {
             reports = reports.stream()
@@ -126,14 +128,15 @@ public class DeliveryReportController {
 
     /**
      * Nhân viên tạo phiếu báo cáo giao gas mới
-     * POST /api/v1/employment
+     * POST /api/v1/delivery-reports
      */
     @PostMapping
+    @Transactional
     public ResponseEntity<ApiResponse<DeliveryReportResponse>> createReport(
-            @RequestBody DeliveryReportRequest request
+            @Valid @RequestBody DeliveryReportRequest request
     ) {
         if (request.getCustomerName() == null || request.getCustomerName().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Vui lòng nhập tên khách hàng"));
+            throw new BadRequestException("Vui lòng nhập tên khách hàng");
         }
 
         int quantity = (request.getQuantity() != null && request.getQuantity() > 0) ? request.getQuantity() : 1;
@@ -149,7 +152,6 @@ public class DeliveryReportController {
 
         Inventory inventory = inventoryRepository.findByContainerType(containerType)
                 .orElseGet(() -> {
-                    // Nếu chưa có, lấy bản ghi đầu tiên hoặc tạo mới
                     List<Inventory> all = inventoryRepository.findAll();
                     if (!all.isEmpty()) return all.get(0);
                     return inventoryRepository.save(Inventory.builder()
@@ -159,6 +161,15 @@ public class DeliveryReportController {
                             .warningThreshold(10)
                             .build());
                 });
+
+        // Kiểm tra tồn kho bình đầy
+        if (inventory.getFullQuantity() < quantity) {
+            throw new BadRequestException("Số lượng bình đầy trong kho (" + inventory.getFullQuantity() + ") không đủ để giao!");
+        }
+
+        // Tự động trừ tồn kho bình đầy khi giao thành công
+        inventory.setFullQuantity(inventory.getFullQuantity() - quantity);
+        inventoryRepository.save(inventory);
 
         // Tìm nhân viên lập đơn (ưu tiên employeeId truyền lên, hoặc tài khoản shipper01 mẫu)
         User employee = null;
@@ -194,76 +205,78 @@ public class DeliveryReportController {
 
     /**
      * Cập nhật thông tin phiếu giao gas
-     * PUT /api/v1/employment/{id}
+     * PUT /api/v1/delivery-reports/{id}
      */
     @PutMapping("/{id}")
+    @Transactional
     public ResponseEntity<ApiResponse<DeliveryReportResponse>> updateReport(
             @PathVariable UUID id,
-            @RequestBody DeliveryReportRequest request
+            @Valid @RequestBody DeliveryReportRequest request
     ) {
-        return deliveryReportRepository.findById(id).map(report -> {
-            if (request.getCustomerName() != null) report.setCustomerName(request.getCustomerName().trim());
-            if (request.getQuantity() != null) report.setQuantity(request.getQuantity());
-            if (request.getUnitPrice() != null) report.setUnitPrice(request.getUnitPrice());
-            if (request.getNotes() != null) report.setNotes(request.getNotes());
-            if (request.getPaymentStatus() != null) report.setPaymentStatus(request.getPaymentStatus());
+        DeliveryReport report = deliveryReportRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Phiếu giao gas", "id", id));
 
-            // Tự động tính lại tổng tiền
-            int qty = report.getQuantity() != null ? report.getQuantity() : 1;
-            double price = report.getUnitPrice() != null ? report.getUnitPrice() : 0.0;
-            report.setTotal(qty * price);
+        if (request.getCustomerName() != null) report.setCustomerName(request.getCustomerName().trim());
+        if (request.getQuantity() != null) report.setQuantity(request.getQuantity());
+        if (request.getUnitPrice() != null) report.setUnitPrice(request.getUnitPrice());
+        if (request.getNotes() != null) report.setNotes(request.getNotes());
+        if (request.getPaymentStatus() != null) report.setPaymentStatus(request.getPaymentStatus());
 
-            if (report.getPaymentStatus() == PaymentStatus.PAID) {
-                report.setActualReceived(report.getTotal());
-            } else {
-                report.setActualReceived(0.0);
-            }
+        // Tự động tính lại tổng tiền
+        int qty = report.getQuantity() != null ? report.getQuantity() : 1;
+        double price = report.getUnitPrice() != null ? report.getUnitPrice() : 0.0;
+        report.setTotal(qty * price);
 
-            // Đổi loại bình nếu có
-            if (request.getContainerType() != null) {
-                inventoryRepository.findByContainerType(request.getContainerType())
-                        .ifPresent(report::setInventory);
-            }
+        if (report.getPaymentStatus() == PaymentStatus.PAID) {
+            report.setActualReceived(report.getTotal());
+        } else {
+            report.setActualReceived(0.0);
+        }
 
-            DeliveryReport updated = deliveryReportRepository.save(report);
-            return ResponseEntity.ok(ApiResponse.ok(DeliveryReportResponse.fromEntity(updated), "Cập nhật thành công"));
-        }).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error("Không tìm thấy phiếu giao gas")));
+        // Đổi loại bình nếu có
+        if (request.getContainerType() != null) {
+            inventoryRepository.findByContainerType(request.getContainerType())
+                    .ifPresent(report::setInventory);
+        }
+
+        DeliveryReport updated = deliveryReportRepository.save(report);
+        return ResponseEntity.ok(ApiResponse.ok(DeliveryReportResponse.fromEntity(updated), "Cập nhật thành công"));
     }
 
     /**
      * Đổi nhanh trạng thái: Đã thanh toán (PAID) <-> Ghi nợ (DEBT)
-     * PATCH /api/v1/employment/{id}/toggle-payment
+     * PATCH /api/v1/delivery-reports/{id}/toggle-payment
      */
     @PatchMapping("/{id}/toggle-payment")
+    @Transactional
     public ResponseEntity<ApiResponse<DeliveryReportResponse>> togglePayment(@PathVariable UUID id) {
-        return deliveryReportRepository.findById(id).map(report -> {
-            PaymentStatus nextStatus = (report.getPaymentStatus() == PaymentStatus.PAID)
-                    ? PaymentStatus.DEBT
-                    : PaymentStatus.PAID;
-            report.setPaymentStatus(nextStatus);
-            report.setActualReceived(nextStatus == PaymentStatus.PAID ? report.getTotal() : 0.0);
+        DeliveryReport report = deliveryReportRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Phiếu giao gas", "id", id));
 
-            DeliveryReport updated = deliveryReportRepository.save(report);
-            return ResponseEntity.ok(ApiResponse.ok(
-                    DeliveryReportResponse.fromEntity(updated),
-                    "Đã chuyển trạng thái: " + (nextStatus == PaymentStatus.PAID ? "Đã thanh toán" : "Ghi nợ")
-            ));
-        }).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error("Không tìm thấy phiếu giao gas")));
+        PaymentStatus nextStatus = (report.getPaymentStatus() == PaymentStatus.PAID)
+                ? PaymentStatus.DEBT
+                : PaymentStatus.PAID;
+        report.setPaymentStatus(nextStatus);
+        report.setActualReceived(nextStatus == PaymentStatus.PAID ? report.getTotal() : 0.0);
+
+        DeliveryReport updated = deliveryReportRepository.save(report);
+        return ResponseEntity.ok(ApiResponse.ok(
+                DeliveryReportResponse.fromEntity(updated),
+                "Đã chuyển trạng thái: " + (nextStatus == PaymentStatus.PAID ? "Đã thanh toán" : "Ghi nợ")
+        ));
     }
 
     /**
      * Xóa phiếu báo cáo giao gas
-     * DELETE /api/v1/employment/{id}
+     * DELETE /api/v1/delivery-reports/{id}
      */
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<ApiResponse<Void>> deleteReport(@PathVariable UUID id) {
-        return deliveryReportRepository.findById(id).map(report -> {
-            deliveryReportRepository.delete(report);
-            return ResponseEntity.ok(ApiResponse.<Void>ok(null, "Xóa phiếu giao gas thành công"));
-        }).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.<Void>error("Không tìm thấy phiếu giao gas")));
+        DeliveryReport report = deliveryReportRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Phiếu giao gas", "id", id));
+
+        deliveryReportRepository.delete(report);
+        return ResponseEntity.ok(ApiResponse.<Void>ok(null, "Xóa phiếu giao gas thành công"));
     }
 }
-

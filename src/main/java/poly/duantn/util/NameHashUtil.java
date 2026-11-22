@@ -27,4 +27,11 @@ public class NameHashUtil {
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("^-+|-+$", "");
     }
+
+    /**
+     * Chuẩn hóa từ khóa tìm kiếm không dấu
+     */
+    public static String normalize(String keyword) {
+        return generateNameHash(keyword);
+    }
 }

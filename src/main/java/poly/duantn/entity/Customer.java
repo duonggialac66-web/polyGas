@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "customers", indexes = {
-    @Index(name = "IX_Customers_NameHash", columnList = "name_hash", unique = true)
+        @Index(name = "IX_Customers_NameHash", columnList = "name_hash", unique = true)
 })
 @Data
 @NoArgsConstructor
@@ -21,13 +21,13 @@ public class Customer {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, columnDefinition = "NVARCHAR(255)")
     private String name;
 
     @Column(name = "phone", length = 20)
     private String phone;
 
-    @Column(name = "address", length = 500)
+    @Column(name = "address", length = 500, columnDefinition = "NVARCHAR(500)")
     private String address;
 
     @Column(name = "latitude")
@@ -59,4 +59,3 @@ public class Customer {
         this.updatedAt = LocalDateTime.now();
     }
 }
-

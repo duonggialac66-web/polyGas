@@ -52,3 +52,11 @@ frontend/dist/
 frontend/*.local
 frontend/.env.local
 
+# Bản ghi chép Trợ Lý cá nhân (Tuyệt đối không đẩy lên GitHub theo yêu cầu)
+tro_ly*
+tro-ly*
+TRO_LY*
+*tro_ly*
+*tro-ly*
+
+

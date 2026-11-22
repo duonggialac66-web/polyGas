@@ -31,7 +31,7 @@
           background: isBackendConnected ? '#10b981' : '#f59e0b',
           display: 'inline-block'
         }"></span>
-        <span>{{ isBackendConnected ? 'Backend: 8080 (Online)' : 'Backend: Chế độ Xem trước (Mock)' }}</span>
+        <span>{{ isBackendConnected ? 'Backend: 8080 (Online)' : 'Backend: Ngoại tuyến' }}</span>
       </div>
 
       <!-- Notification Bell -->
@@ -62,7 +62,7 @@ defineEmits(['refresh'])
 
 const route = useRoute()
 const currentRouteTitle = computed(() => {
-  return route.meta?.title ? route.meta.title.split(' - ')[0] : 'OriginGas ERP'
+  return route.meta?.title ? route.meta.title.split(' - ')[0] : 'PolyGas ERP'
 })
 </script>
 
