@@ -96,6 +96,12 @@
         </div>
 
         <form @submit.prevent="submitCreateExpense" class="p-4 space-y-3">
+          <!-- General Form Error Banner -->
+          <div v-if="errors.general" class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
+            <span>⚠️</span>
+            <span>{{ errors.general }}</span>
+          </div>
+
           <!-- Quick Preset Chips -->
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1.5">Chọn nhanh khoản chi</label>
@@ -112,37 +118,64 @@
             </div>
           </div>
 
+          <!-- Description -->
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Mô tả khoản chi *</label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              Mô tả khoản chi <span class="text-rose-500">*</span>
+            </label>
             <input 
               v-model="form.description" 
+              @input="delete errors.description"
               type="text" 
-              required
               placeholder="VD: Đổ xăng xe Wave, Ăn trưa..."
-              class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 focus:outline-none"
+              :class="[
+                'w-full px-3 py-2 text-xs border rounded-xl focus:outline-none transition-all placeholder:text-slate-400 font-medium',
+                errors.description ? 'border-rose-500 bg-rose-50/20 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500' : 'border-slate-200 focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500'
+              ]"
             />
+            <p v-if="errors.description" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
+              <span>⚠️</span> {{ errors.description }}
+            </p>
           </div>
 
+          <!-- Amount & Expense Date -->
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Số tiền (VNĐ) *</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">
+                Số tiền (VNĐ) <span class="text-rose-500">*</span>
+              </label>
               <input 
                 v-model.number="form.amount" 
+                @input="delete errors.amount"
                 type="number" 
-                min="1"
-                required
+                min="1000"
+                step="1000"
                 placeholder="50000"
-                class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 focus:outline-none"
+                :class="[
+                  'w-full px-3 py-2 text-xs border rounded-xl focus:outline-none transition-all font-semibold',
+                  errors.amount ? 'border-rose-500 bg-rose-50/20 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500' : 'border-slate-200 focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500'
+                ]"
               />
+              <p v-if="errors.amount" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
+                <span>⚠️</span> {{ errors.amount }}
+              </p>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Ngày chi</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">
+                Ngày chi <span class="text-rose-500">*</span>
+              </label>
               <input 
                 v-model="form.expenseDate" 
+                @input="delete errors.expenseDate"
                 type="date" 
-                required
-                class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none"
+                :class="[
+                  'w-full px-3 py-2 text-xs border rounded-xl focus:outline-none transition-all',
+                  errors.expenseDate ? 'border-rose-500 bg-rose-50/20 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500' : 'border-slate-200 focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500'
+                ]"
               />
+              <p v-if="errors.expenseDate" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
+                <span>⚠️</span> {{ errors.expenseDate }}
+              </p>
             </div>
           </div>
 
@@ -191,6 +224,7 @@ const expenses = ref([])
 const loading = ref(false)
 const showModal = ref(false)
 const submitting = ref(false)
+const errors = ref({})
 
 const form = ref({
   employeeId: currentEmployeeId.value,
@@ -199,6 +233,26 @@ const form = ref({
   amount: null,
   notes: ''
 })
+
+const validateExpenseForm = () => {
+  const errs = {}
+  if (!form.value.description || !form.value.description.trim()) {
+    errs.description = 'Vui lòng nhập mô tả khoản chi'
+  } else if (form.value.description.trim().length < 2) {
+    errs.description = 'Mô tả khoản chi tối thiểu phải có 2 ký tự'
+  }
+
+  if (form.value.amount === null || form.value.amount === undefined || Number(form.value.amount) <= 0) {
+    errs.amount = 'Số tiền chi phí phải lớn hơn 0'
+  }
+
+  if (!form.value.expenseDate) {
+    errs.expenseDate = 'Vui lòng chọn ngày chi'
+  }
+
+  errors.value = errs
+  return Object.keys(errs).length === 0
+}
 
 const presets = [
   { text: '⛽ Đổ xăng 50.000đ', desc: 'Đổ xăng xe máy', amount: 50000 },
@@ -236,27 +290,33 @@ const openModal = () => {
     amount: null,
     notes: ''
   }
+  errors.value = {}
   showModal.value = true
 }
 
 const applyPreset = (preset) => {
   form.value.description = preset.desc
   form.value.amount = preset.amount
+  delete errors.value.description
+  delete errors.value.amount
 }
 
 const submitCreateExpense = async () => {
-  if (!form.value.amount || form.value.amount <= 0) {
-    alert('Số tiền chi phí phải lớn hơn 0!')
+  if (!validateExpenseForm()) {
     return
   }
+
   submitting.value = true
   try {
-    const res = await expenseService.create(form.value)
-    alert(res.message || 'Ghi nhận chi phí thành công!')
+    await expenseService.create(form.value)
     showModal.value = false
     loadExpenses()
   } catch (err) {
-    alert(err.message || 'Lỗi khi ghi nhận chi phí')
+    if (err.fieldErrors && Object.keys(err.fieldErrors).length > 0) {
+      errors.value = { ...err.fieldErrors }
+    } else {
+      errors.value.general = err.message || 'Lỗi khi ghi nhận chi phí'
+    }
   } finally {
     submitting.value = false
   }

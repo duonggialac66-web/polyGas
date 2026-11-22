@@ -23,17 +23,28 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response Interceptor: Trích xuất ApiResponse chuẩn { success, message, data }
+// Response Interceptor: Trích xuất ApiResponse chuẩn và giữ lại danh sách lỗi trường (fieldErrors)
 apiClient.interceptors.response.use(
   (response) => {
     return response.data
   },
   (error) => {
-    const message = error.response?.data?.message || error.message || 'Lỗi kết nối máy chủ'
-    console.error('API Error:', message)
-    return Promise.reject(new Error(message))
+    const resData = error.response?.data
+    const message = resData?.message || error.message || 'Lỗi kết nối máy chủ'
+    const customError = new Error(message)
+    customError.response = error.response
+    customError.status = error.response?.status
+    customError.fieldErrors = (resData && typeof resData.data === 'object' && !Array.isArray(resData.data)) ? resData.data : {}
+
+    // Bắt lỗi chuẩn JWT 401: Token hết hạn hoặc không hợp lệ
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token')
+      console.warn('JWT Token hết hạn hoặc không hợp lệ, đã xóa token khỏi localStorage!')
+    }
+
+    console.error('API Error:', message, customError.fieldErrors)
+    return Promise.reject(customError)
   }
 )
 
 export default apiClient
-
