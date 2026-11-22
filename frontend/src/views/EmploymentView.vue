@@ -1,5 +1,5 @@
 <template>
-  <EmployeeLayout :is-backend-connected="!isMockData" :debt-count="debtBillsCount" @refresh="fetchReports">
+  <EmployeeLayout :debt-count="debtBillsCount" @refresh="fetchReports">
     <!-- Header Section (Corporate Enterprise) -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-200">
       <div>
@@ -27,20 +27,6 @@
           <span>Nhập Phiếu Giao</span>
         </button>
       </div>
-    </div>
-
-    <!-- Alert Banner when Backend is Offline (Mock Mode) -->
-    <div 
-      v-if="isMockData" 
-      class="mb-5 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between text-xs text-amber-800"
-    >
-      <div class="flex items-center gap-2">
-        <span class="font-bold text-amber-900">Chế độ Demo (Offline):</span>
-        <span>Hệ thống backend chưa khởi động. Bạn vẫn có thể thao tác với dữ liệu mẫu bên dưới.</span>
-      </div>
-      <button @click="fetchReports" class="text-xs font-semibold text-amber-900 hover:underline ml-2">
-        Thử lại
-      </button>
     </div>
 
     <!-- 5 KPI Summary Cards (Corporate Clean) -->
@@ -427,7 +413,6 @@ const selectedDate = ref(new Date().toISOString().split('T')[0])
 const reports = ref([])
 const inventories = ref([])
 const loading = ref(false)
-const isMockData = ref(false)
 const submitting = ref(false)
 const formError = ref('')
 
@@ -521,7 +506,6 @@ async function fetchReports() {
       inventoryService.getInventories().catch(() => ({ data: [] }))
     ])
     reports.value = repRes.data || []
-    isMockData.value = !!repRes.isMock
     inventories.value = invRes.data || []
   } catch (err) {
     console.error('Lỗi nạp danh sách báo cáo:', err)

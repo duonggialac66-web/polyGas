@@ -1,5 +1,5 @@
 <template>
-  <EmployeeLayout :wide="true" :is-backend-connected="!isMockData" @refresh="loadAllData">
+  <EmployeeLayout :wide="true" @refresh="loadAllData">
     <!-- Header Section (Executive Corporate Command Center) -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-200">
       <div>
@@ -20,20 +20,6 @@
           class="text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded-lg px-3 py-1.5 shadow-2xs focus:outline-none focus:border-slate-800 transition-colors cursor-pointer"
         />
       </div>
-    </div>
-
-    <!-- Alert Banner when Backend is Offline (Mock Mode) -->
-    <div 
-      v-if="isMockData" 
-      class="mb-5 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between text-xs text-amber-800"
-    >
-      <div class="flex items-center gap-2">
-        <span class="font-bold text-amber-900">Chế độ Demo (Offline):</span>
-        <span>Đang hiển thị dữ liệu mô phỏng theo ca trực. Dữ liệu sẽ tự động đồng bộ khi kết nối máy chủ.</span>
-      </div>
-      <button @click="loadAllData" class="text-xs font-semibold text-amber-900 hover:underline ml-2">
-        Đồng bộ lại
-      </button>
     </div>
 
     <!-- Executive KPI Row: 4 Metric Cards -->
@@ -213,7 +199,7 @@
     <div>
       <h3 class="text-sm font-bold text-slate-900 uppercase tracking-tight mb-3">Phân Hệ Nghiệp Vụ Doanh Nghiệp</h3>
       
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <!-- 1. Quản Lý Kho Gas -->
         <router-link 
           to="/inventory" 
@@ -252,14 +238,33 @@
           </div>
         </router-link>
 
-        <!-- 3. Danh Bạ Khách Hàng -->
+        <!-- 3. Quản Lý Nhân Sự & Phân Quyền -->
+        <router-link 
+          to="/users" 
+          class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs hover:border-slate-400 hover:shadow-xs transition-all flex flex-col justify-between group"
+        >
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-900 group-hover:text-slate-700">3. Nhân Sự & Phân Quyền</span>
+              <span class="text-slate-400 group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">
+              Cấp tài khoản nhân viên, phân quyền ADMIN / SHIPPER, quản lý lương cơ bản và khóa tài khoản khi cần.
+            </p>
+          </div>
+          <div class="mt-4 pt-2 border-t border-slate-100 text-[11px] font-semibold text-slate-600">
+            Truy cập phân hệ &raquo;
+          </div>
+        </router-link>
+
+        <!-- 4. Danh Bạ Khách Hàng -->
         <router-link 
           to="/customers" 
           class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs hover:border-slate-400 hover:shadow-xs transition-all flex flex-col justify-between group"
         >
           <div>
             <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold text-slate-900 group-hover:text-slate-700">3. Danh Bạ Khách Hàng</span>
+              <span class="text-xs font-bold text-slate-900 group-hover:text-slate-700">4. Danh Bạ Khách Hàng</span>
               <span class="text-slate-400 group-hover:translate-x-0.5 transition-transform">&rarr;</span>
             </div>
             <p class="text-xs text-slate-500 leading-relaxed">
@@ -271,14 +276,14 @@
           </div>
         </router-link>
 
-        <!-- 4. Chi Phí Vận Hành -->
+        <!-- 5. Chi Phí Vận Hành -->
         <router-link 
           to="/expenses" 
           class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs hover:border-slate-400 hover:shadow-xs transition-all flex flex-col justify-between group"
         >
           <div>
             <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold text-slate-900 group-hover:text-slate-700">4. Chi Phí Vận Hành</span>
+              <span class="text-xs font-bold text-slate-900 group-hover:text-slate-700">5. Chi Phí Vận Hành</span>
               <span class="text-slate-400 group-hover:translate-x-0.5 transition-transform">&rarr;</span>
             </div>
             <p class="text-xs text-slate-500 leading-relaxed">
@@ -305,7 +310,6 @@ const currentDate = ref(new Date().toISOString().split('T')[0])
 const reports = ref([])
 const inventoryList = ref([])
 const expensesList = ref([])
-const isMockData = ref(false)
 
 const salesMetrics = computed(() => {
   const totalBills = reports.value.length
@@ -348,7 +352,6 @@ async function loadAllData() {
     ])
 
     reports.value = repRes.data || []
-    isMockData.value = !!repRes.isMock
     inventoryList.value = invRes.data || []
     expensesList.value = expRes.data || []
   } catch (err) {

@@ -6,7 +6,7 @@
         🔥
       </div>
       <div class="brand-text">
-        <h1>OriginGas</h1>
+        <h1>PolyGas</h1>
         <span>Enterprise v2.0</span>
       </div>
     </div>
@@ -62,7 +62,7 @@
       <div class="user-avatar-sm">AD</div>
       <div style="flex: 1; min-width: 0;">
         <div style="font-weight: 700; font-size: 0.85rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-          Admin OriginGas
+          Admin PolyGas
         </div>
         <div style="font-size: 0.75rem; color: #94a3b8;">
           Quản trị cấp cao

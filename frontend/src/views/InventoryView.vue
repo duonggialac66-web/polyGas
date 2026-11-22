@@ -1,5 +1,5 @@
 <template>
-  <EmployeeLayout :wide="true" :is-backend-connected="!isMockData" @refresh="fetchInventories">
+  <EmployeeLayout :wide="true" @refresh="fetchInventories">
     <!-- Header Section (Corporate Enterprise) -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-200">
       <div>
@@ -12,15 +12,6 @@
       </div>
 
       <div class="flex items-center gap-2 flex-wrap">
-        <button 
-          v-if="isMockData"
-          @click="handleResetMock" 
-          class="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-300 rounded-lg transition-colors"
-          title="Đặt lại dữ liệu mẫu"
-        >
-          Khôi Phục Mẫu
-        </button>
-
         <button 
           @click="openStockModalWithMode('IMPORT', null)"
           class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors"
@@ -41,20 +32,6 @@
           <span>Xuất Kho Gas</span>
         </button>
       </div>
-    </div>
-
-    <!-- Alert Banner when Backend is Offline (Mock Mode) -->
-    <div 
-      v-if="isMockData" 
-      class="mb-5 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between text-xs text-amber-800"
-    >
-      <div class="flex items-center gap-2">
-        <span class="font-bold text-amber-900">Chế độ Demo (Offline):</span>
-        <span>Hệ thống backend chưa khởi động. Các thao tác nhập/xuất kho đang được lưu tạm trên trình duyệt của bạn.</span>
-      </div>
-      <button @click="fetchInventories" class="text-xs font-semibold text-amber-900 hover:underline ml-2">
-        Đồng bộ lại
-      </button>
     </div>
 
     <!-- 4 KPI Summary Cards (Clean Corporate) -->
@@ -286,7 +263,6 @@ import EmployeeLayout from '../components/layout/EmployeeLayout.vue'
 import { inventoryService } from '../services/inventoryService.js'
 
 const inventories = ref([])
-const isMockData = ref(false)
 
 const stockModal = reactive({
   isOpen: false,
@@ -309,7 +285,6 @@ async function fetchInventories() {
   try {
     const res = await inventoryService.getInventories()
     inventories.value = res.data || []
-    isMockData.value = !!res.isMock
   } catch (err) {
     console.error('Lỗi nạp kho gas:', err)
   }
@@ -343,13 +318,6 @@ async function submitStockAdjustment() {
     stockModal.error = err.message || 'Thao tác kho thất bại!'
   } finally {
     stockModal.submitting = false
-  }
-}
-
-function handleResetMock() {
-  if (confirm('Khôi phục toàn bộ số liệu kho về trạng thái ban đầu?')) {
-    localStorage.removeItem('polygas_mock_inventories')
-    fetchInventories()
   }
 }
 

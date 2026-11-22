@@ -8,6 +8,7 @@ import CustomersView from '../views/CustomersView.vue'
 import DebtsView from '../views/DebtsView.vue'
 import ExpensesView from '../views/ExpensesView.vue'
 import AdminViewReport from '../views/AdminViewReport.vue'
+import UsersView from '../views/UsersView.vue'
 import { isLoggedIn } from '../services/api.js'
 
 function getRole() {
@@ -72,6 +73,16 @@ const routes = [
     }
   },
   {
+    path: '/users',
+    name: 'Users',
+    component: UsersView,
+    meta: {
+      title: 'Quản Lý Nhân Sự & Phân Quyền - PolyGas Enterprise',
+      requiresAuth: true,
+      roles: ['ADMIN', 'ROLE_ADMIN']
+    }
+  },
+  {
     path: '/employment',
     name: 'Employment',
     component: EmploymentView,
@@ -125,6 +136,11 @@ router.beforeEach((to, from, next) => {
 
   // Route chỉ dành cho guest (login/register) mà đã login → điều hướng theo role
   if (to.meta.requiresGuest && loggedIn) {
+    return next(isAdminRole() ? { name: 'Dashboard' } : { name: 'Employment' })
+  }
+
+  // Route giới hạn vai trò (ví dụ: chỉ ADMIN)
+  if (to.meta && to.meta.roles && !to.meta.roles.includes(getRole())) {
     return next(isAdminRole() ? { name: 'Dashboard' } : { name: 'Employment' })
   }
 

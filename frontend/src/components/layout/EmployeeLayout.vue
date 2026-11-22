@@ -6,11 +6,11 @@
         <!-- Logo & Enterprise Brand -->
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white font-black text-sm tracking-wider">
-            OG
+            PG
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <span class="text-sm font-bold tracking-tight text-slate-900">PolyGAS</span>
+              <span class="text-sm font-bold tracking-tight text-slate-900">PolyGas</span>
               <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wider uppercase bg-slate-100 text-slate-600 border border-slate-200">Enterprise</span>
             </div>
             <p class="text-[11px] text-slate-500 font-medium">Hệ Thống Quản Trị Vận Hành Gas</p>
@@ -28,6 +28,9 @@
             </router-link>
             <router-link to="/admin/view_report" class="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-100 transition-colors" active-class="text-slate-900 bg-slate-100 font-bold">
               Đối Soát Thu Chi
+            </router-link>
+            <router-link to="/users" class="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-100 transition-colors" active-class="text-slate-900 bg-slate-100 font-bold">
+              Nhân Sự
             </router-link>
             <router-link to="/employment" class="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-100 transition-colors" active-class="text-slate-900 bg-slate-100 font-bold">
               Giao Hàng
@@ -65,7 +68,7 @@
               : 'bg-amber-50 text-amber-700 border-amber-200'"
           >
             <span class="w-1.5 h-1.5 rounded-full" :class="isBackendConnected ? 'bg-emerald-600' : 'bg-amber-500'"></span>
-            <span>{{ isBackendConnected ? 'Máy chủ: Kết nối' : 'Máy chủ: Ngoại tuyến (Demo)' }}</span>
+            <span>{{ isBackendConnected ? 'Máy chủ: Đang hoạt động' : 'Máy chủ: Ngoại tuyến' }}</span>
           </div>
 
           <!-- Refresh Button -->

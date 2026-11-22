@@ -14,12 +14,13 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import poly.duantn.dto.ApiResponse;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Bộ xử lý ngoại lệ toàn cục cho toàn bộ hệ thống RESTful API
- * Đảm bảo mọi lỗi (Validation, JWT, Nghiệp vụ, 404, 500) đều trả về chuẩn ApiResponse<T>
+ * Đảm bảo mọi lỗi (Validation, JWT, Nghiệp vụ, 404, 500) đều trả về chuẩn ApiResponse
  */
 @RestControllerAdvice
 @Slf4j
@@ -32,17 +33,28 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
-        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-            errors.put(error.getField(), error.getDefaultMessage());
+        String firstMessage = "Dữ liệu nhập vào không hợp lệ";
+
+        if (ex.getBindingResult() != null && ex.getBindingResult().hasFieldErrors()) {
+            for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            FieldError firstError = ex.getBindingResult().getFieldError();
+            if (firstError != null && firstError.getDefaultMessage() != null) {
+                firstMessage = firstError.getDefaultMessage();
+            }
         }
-        String firstMessage = errors.values().stream().findFirst().orElse("Dữ liệu gửi lên không hợp lệ");
+
         log.warn("Form validation errors: {}", errors);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.<Map<String, String>>builder()
-                        .success(false)
-                        .message(firstMessage)
-                        .data(errors)
-                        .build());
+
+        ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
+                .success(false)
+                .message(firstMessage)
+                .data(errors)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     /**

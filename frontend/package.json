@@ -1,9 +1,9 @@
 {
-  "name": "origingas-frontend",
+  "name": "polygas-frontend",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "OriginGas Enterprise Frontend SPA - Vue 3 + Vite",
+  "description": "PolyGas Enterprise Frontend SPA - Vue 3 + Vite",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

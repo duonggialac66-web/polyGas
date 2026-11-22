@@ -63,17 +63,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // Chỉ set SecurityContext nếu chưa được xác thực trong request này
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                // Nạp authorities từ claim "roles" trong token (không query DB cho mỗi request)
-                List<SimpleGrantedAuthority> authorities = List.of();
-                if (rolesStr != null && !rolesStr.isBlank()) {
-                    authorities = Arrays.stream(rolesStr.split(","))
-                            .map(String::trim)
-                            .filter(r -> !r.isEmpty())
-                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                            .collect(Collectors.toList());
-                }
+                // Nạp authorities từ claim "roles" trong token (khai báo final/effectively final để dùng trong lambda)
+                final List<SimpleGrantedAuthority> authorities = (rolesStr != null && !rolesStr.isBlank())
+                        ? Arrays.stream(rolesStr.split(","))
+                                .map(String::trim)
+                                .filter(r -> !r.isEmpty())
+                                .map(role -> new SimpleGrantedAuthority(role.startsWith("ROLE_") ? role : "ROLE_" + role))
+                                .collect(Collectors.toList())
+                        : List.of();
 
-                // Nếu cần UserDetails đầy đủ (vd: để check status INACTIVE)
+                // Nạp UserDetails để kiểm tra trạng thái tài khoản (INACTIVE / LOCKED)
                 UserDetails userDetails = userRepository.findByUsername(username)
                         .map(user -> org.springframework.security.core.userdetails.User.builder()
                                 .username(user.getUsername())
@@ -87,7 +86,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 .build())
                         .orElse(null);
 
-                if (userDetails != null && !userDetails.isAccountLocked()) {
+                // Trong Spring Security UserDetails: isAccountNonLocked() trả về true nếu tài khoản KHÔNG bị khóa
+                if (userDetails != null && userDetails.isAccountNonLocked()) {
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails, null, userDetails.getAuthorities()
