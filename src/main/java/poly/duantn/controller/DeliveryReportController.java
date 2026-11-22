@@ -1,5 +1,6 @@
 package poly.duantn.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -98,7 +99,7 @@ public class DeliveryReportController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<DeliveryReportResponse>> createReport(
-            @RequestBody DeliveryReportRequest request
+            @Valid @RequestBody DeliveryReportRequest request
     ) {
         if (request.getCustomerName() == null || request.getCustomerName().trim().isEmpty()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("Vui lòng nhập tên khách hàng"));
@@ -167,7 +168,7 @@ public class DeliveryReportController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<DeliveryReportResponse>> updateReport(
             @PathVariable UUID id,
-            @RequestBody DeliveryReportRequest request
+            @Valid @RequestBody DeliveryReportRequest request
     ) {
         return deliveryReportRepository.findById(id).map(report -> {
             if (request.getCustomerName() != null) report.setCustomerName(request.getCustomerName().trim());

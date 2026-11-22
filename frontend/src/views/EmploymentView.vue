@@ -274,6 +274,12 @@
 
         <!-- Form Body -->
         <form @submit.prevent="handleSubmitForm" class="p-5 space-y-4">
+          <!-- General Form Error Banner -->
+          <div v-if="errors.general" class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
+            <span>⚠️</span>
+            <span>{{ errors.general }}</span>
+          </div>
+
           <!-- 1. Customer Name -->
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">
@@ -282,10 +288,16 @@
             <input 
               type="text" 
               v-model="form.customerName" 
-              required
+              @input="delete errors.customerName"
               placeholder="VD: Quán Cơm Tấm 24, Cô Lan, Bún Bò Huế 36..."
-              class="w-full px-3.5 py-2.5 text-xs text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all placeholder:text-slate-400 font-medium"
+              :class="[
+                'w-full px-3.5 py-2.5 text-xs text-slate-800 bg-slate-50 border rounded-xl focus:bg-white focus:outline-none transition-all placeholder:text-slate-400 font-medium',
+                errors.customerName ? 'border-rose-500 bg-rose-50/20 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500' : 'border-slate-200 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500'
+              ]"
             />
+            <p v-if="errors.customerName" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
+              <span>⚠️</span> {{ errors.customerName }}
+            </p>
           </div>
 
           <!-- 2. Gas Container Selector Chips -->
@@ -302,12 +314,15 @@
                 class="p-2.5 text-left rounded-xl border transition-all text-xs flex flex-col justify-between"
                 :class="form.containerType === g.type 
                   ? 'border-sky-500 bg-sky-50/80 ring-2 ring-sky-500/20 text-sky-950 font-bold' 
-                  : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700 font-medium'"
+                  : (errors.containerType ? 'border-rose-300 bg-rose-50/10 text-slate-700 font-medium' : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700 font-medium')"
               >
                 <span>🛢️ {{ g.type }}</span>
                 <span class="text-[11px] text-slate-500 mt-1">{{ formatCurrency(g.defaultPrice) }}</span>
               </button>
             </div>
+            <p v-if="errors.containerType" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
+              <span>⚠️</span> {{ errors.containerType }}
+            </p>
           </div>
 
           <!-- 3. Quantity & Unit Price Stepper -->
@@ -316,10 +331,13 @@
               <label class="block text-xs font-bold text-slate-700 mb-1">
                 Số Lượng Bình <span class="text-rose-500">*</span>
               </label>
-              <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 overflow-hidden">
+              <div 
+                class="flex items-center border rounded-xl bg-slate-50 overflow-hidden"
+                :class="errors.quantity ? 'border-rose-500 bg-rose-50/20' : 'border-slate-200'"
+              >
                 <button 
                   type="button" 
-                  @click="form.quantity = Math.max(1, form.quantity - 1)"
+                  @click="form.quantity = Math.max(1, form.quantity - 1); delete errors.quantity"
                   class="px-3 py-2 text-slate-600 hover:bg-slate-200 font-bold transition-colors active:scale-95"
                 >
                   -
@@ -329,16 +347,20 @@
                   min="1" 
                   max="100" 
                   v-model.number="form.quantity" 
+                  @input="delete errors.quantity"
                   class="w-full text-center py-2 text-xs font-bold text-slate-900 bg-transparent focus:outline-none"
                 />
                 <button 
                   type="button" 
-                  @click="form.quantity = form.quantity + 1"
+                  @click="form.quantity = form.quantity + 1; delete errors.quantity"
                   class="px-3 py-2 text-slate-600 hover:bg-slate-200 font-bold transition-colors active:scale-95"
                 >
                   +
                 </button>
               </div>
+              <p v-if="errors.quantity" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
+                <span>⚠️</span> {{ errors.quantity }}
+              </p>
             </div>
 
             <div>
@@ -349,9 +371,15 @@
                 type="number" 
                 step="5000"
                 v-model.number="form.unitPrice" 
-                required
-                class="w-full px-3 py-2 text-xs font-semibold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                @input="delete errors.unitPrice"
+                :class="[
+                  'w-full px-3 py-2 text-xs font-semibold text-slate-800 bg-slate-50 border rounded-xl focus:bg-white focus:outline-none transition-all',
+                  errors.unitPrice ? 'border-rose-500 bg-rose-50/20 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500' : 'border-slate-200 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500'
+                ]"
               />
+              <p v-if="errors.unitPrice" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
+                <span>⚠️</span> {{ errors.unitPrice }}
+              </p>
             </div>
           </div>
 
@@ -373,9 +401,9 @@
                 class="flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all text-xs font-bold"
                 :class="form.paymentStatus === 'PAID' 
                   ? 'border-emerald-500 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-500/20' 
-                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'"
+                  : (errors.paymentStatus ? 'border-rose-300 bg-white text-slate-600' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50')"
               >
-                <input type="radio" value="PAID" v-model="form.paymentStatus" class="sr-only" />
+                <input type="radio" value="PAID" v-model="form.paymentStatus" @change="delete errors.paymentStatus" class="sr-only" />
                 <span class="text-sm">✅</span>
                 <span>Khách Đã Trả Tiền</span>
               </label>
@@ -384,13 +412,16 @@
                 class="flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all text-xs font-bold"
                 :class="form.paymentStatus === 'DEBT' 
                   ? 'border-rose-500 bg-rose-50 text-rose-800 ring-2 ring-rose-500/20' 
-                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'"
+                  : (errors.paymentStatus ? 'border-rose-300 bg-white text-slate-600' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50')"
               >
-                <input type="radio" value="DEBT" v-model="form.paymentStatus" class="sr-only" />
+                <input type="radio" value="DEBT" v-model="form.paymentStatus" @change="delete errors.paymentStatus" class="sr-only" />
                 <span class="text-sm">⚠️</span>
                 <span>Ghi Nợ (Chưa Thu)</span>
               </label>
             </div>
+            <p v-if="errors.paymentStatus" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
+              <span>⚠️</span> {{ errors.paymentStatus }}
+            </p>
           </div>
 
           <!-- 5. Notes -->
@@ -438,6 +469,7 @@ const loading = ref(false)
 const isMockData = ref(false)
 const formSubmitting = ref(false)
 const selectedDate = ref(new Date().toISOString().split('T')[0])
+const errors = ref({})
 
 // Filters
 const searchKeyword = ref('')
@@ -459,6 +491,35 @@ const form = reactive({
   paymentStatus: 'PAID',
   notes: ''
 })
+
+// Client validation
+const validateForm = () => {
+  const errs = {}
+  if (!form.customerName || !form.customerName.trim()) {
+    errs.customerName = 'Vui lòng nhập tên khách hàng'
+  } else if (form.customerName.trim().length < 2) {
+    errs.customerName = 'Tên khách hàng tối thiểu 2 ký tự'
+  }
+
+  if (!form.containerType) {
+    errs.containerType = 'Vui lòng chọn loại bình gas'
+  }
+
+  if (form.quantity === null || form.quantity === undefined || Number(form.quantity) < 1) {
+    errs.quantity = 'Số lượng bình phải lớn hơn hoặc bằng 1'
+  }
+
+  if (form.unitPrice === null || form.unitPrice === undefined || Number(form.unitPrice) < 0) {
+    errs.unitPrice = 'Đơn giá không được để trống hoặc âm'
+  }
+
+  if (!form.paymentStatus) {
+    errs.paymentStatus = 'Vui lòng chọn trạng thái thanh toán'
+  }
+
+  errors.value = errs
+  return Object.keys(errs).length === 0
+}
 
 // Computed Total
 const computedTotal = computed(() => {
@@ -523,6 +584,7 @@ const openCreateModal = () => {
   modal.isOpen = true
   modal.isEdit = false
   modal.currentId = null
+  errors.value = {}
   Object.assign(form, {
     customerName: '',
     containerType: 'Bình 12kg Xám',
@@ -537,6 +599,7 @@ const openEditModal = (item) => {
   modal.isOpen = true
   modal.isEdit = true
   modal.currentId = item.id
+  errors.value = {}
   Object.assign(form, {
     customerName: item.customerName,
     containerType: item.containerType,
@@ -549,9 +612,14 @@ const openEditModal = (item) => {
 
 const closeModal = () => {
   modal.isOpen = false
+  errors.value = {}
 }
 
 const handleSubmitForm = async () => {
+  if (!validateForm()) {
+    return
+  }
+
   formSubmitting.value = true
   try {
     const payload = {
@@ -568,7 +636,11 @@ const handleSubmitForm = async () => {
     closeModal()
     fetchReports()
   } catch (err) {
-    alert('Thao tác thất bại: ' + err.message)
+    if (err.fieldErrors && Object.keys(err.fieldErrors).length > 0) {
+      errors.value = { ...err.fieldErrors }
+    } else {
+      errors.value.general = err.message || 'Thao tác thất bại, vui lòng kiểm tra lại!'
+    }
   } finally {
     formSubmitting.value = false
   }

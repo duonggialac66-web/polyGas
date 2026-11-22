@@ -114,6 +114,7 @@
     <!-- Modal Thêm Khách Hàng Mới & Ghim GPS -->
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
       <div class="bg-white w-full max-w-md rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in zoom-in duration-150">
+        <!-- Modal Header -->
         <div class="p-4 border-b border-slate-100 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <span class="text-base">📍</span>
@@ -123,35 +124,66 @@
         </div>
 
         <form @submit.prevent="submitCreateCustomer" class="p-4 space-y-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Tên khách hàng / Quán ăn *</label>
-            <input 
-              v-model="form.name" 
-              type="text" 
-              required
-              placeholder="VD: Quán Cơm Bình Dân Cô Ba"
-              class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 focus:outline-none"
-            />
+          <!-- General Form Error Banner -->
+          <div v-if="errors.general" class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
+            <span>⚠️</span>
+            <span>{{ errors.general }}</span>
           </div>
 
+          <!-- Customer Name -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              Tên khách hàng / Quán ăn <span class="text-rose-500">*</span>
+            </label>
+            <input 
+              v-model="form.name" 
+              @input="delete errors.name"
+              type="text" 
+              placeholder="VD: Quán Cơm Bình Dân Cô Ba"
+              :class="[
+                'w-full px-3 py-2 text-xs border rounded-xl focus:outline-none transition-all placeholder:text-slate-400 font-medium',
+                errors.name ? 'border-rose-500 bg-rose-50/20 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500' : 'border-slate-200 focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500'
+              ]"
+            />
+            <p v-if="errors.name" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
+              <span>⚠️</span> {{ errors.name }}
+            </p>
+          </div>
+
+          <!-- Customer Phone -->
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Số điện thoại</label>
             <input 
               v-model="form.phone" 
+              @input="delete errors.phone"
               type="text" 
               placeholder="VD: 0908 123 456"
-              class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 focus:outline-none"
+              :class="[
+                'w-full px-3 py-2 text-xs border rounded-xl focus:outline-none transition-all placeholder:text-slate-400 font-medium',
+                errors.phone ? 'border-rose-500 bg-rose-50/20 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500' : 'border-slate-200 focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500'
+              ]"
             />
+            <p v-if="errors.phone" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
+              <span>⚠️</span> {{ errors.phone }}
+            </p>
           </div>
 
+          <!-- Customer Address -->
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Địa chỉ chi tiết</label>
             <input 
               v-model="form.address" 
+              @input="delete errors.address"
               type="text" 
               placeholder="VD: 128 Nguyễn Trãi, P.3, Q.5, TP.HCM"
-              class="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 focus:outline-none"
+              :class="[
+                'w-full px-3 py-2 text-xs border rounded-xl focus:outline-none transition-all placeholder:text-slate-400 font-medium',
+                errors.address ? 'border-rose-500 bg-rose-50/20 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500' : 'border-slate-200 focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500'
+              ]"
             />
+            <p v-if="errors.address" class="text-xs text-rose-500 mt-1 flex items-center gap-1 font-medium">
+              <span>⚠️</span> {{ errors.address }}
+            </p>
           </div>
 
           <!-- GPS Section -->
@@ -236,6 +268,7 @@ let searchTimeout = null
 const showModal = ref(false)
 const submitting = ref(false)
 const gettingGps = ref(false)
+const errors = ref({})
 
 const form = ref({
   name: '',
@@ -245,6 +278,26 @@ const form = ref({
   longitude: null,
   notes: ''
 })
+
+const validateCustomerForm = () => {
+  const errs = {}
+  if (!form.value.name || !form.value.name.trim()) {
+    errs.name = 'Vui lòng nhập tên khách hàng'
+  } else if (form.value.name.trim().length < 2) {
+    errs.name = 'Tên khách hàng phải có tối thiểu 2 ký tự'
+  }
+
+  if (form.value.phone && form.value.phone.trim()) {
+    const cleanPhone = form.value.phone.replace(/[\s.-]/g, '')
+    const phoneRegex = /^(0[35789][0-9]{8})$/
+    if (!phoneRegex.test(cleanPhone)) {
+      errs.phone = 'Số điện thoại phải gồm 10 chữ số hợp lệ (VD: 0908123456)'
+    }
+  }
+
+  errors.value = errs
+  return Object.keys(errs).length === 0
+}
 
 const loadCustomers = async () => {
   loading.value = true
@@ -290,6 +343,7 @@ const openCreateModal = () => {
     longitude: null,
     notes: ''
   }
+  errors.value = {}
   showModal.value = true
 }
 
@@ -315,14 +369,25 @@ const getCurrentLocation = () => {
 }
 
 const submitCreateCustomer = async () => {
+  if (!validateCustomerForm()) {
+    return
+  }
+
   submitting.value = true
   try {
-    const res = await customerService.create(form.value)
-    alert(res.message || 'Thêm khách hàng thành công!')
+    const payload = {
+      ...form.value,
+      phone: form.value.phone ? form.value.phone.replace(/[\s.-]/g, '') : null
+    }
+    await customerService.create(payload)
     showModal.value = false
     loadCustomers()
   } catch (err) {
-    alert(err.message || 'Lỗi khi tạo khách hàng')
+    if (err.fieldErrors && Object.keys(err.fieldErrors).length > 0) {
+      errors.value = { ...err.fieldErrors }
+    } else {
+      errors.value.general = err.message || 'Lỗi khi tạo khách hàng'
+    }
   } finally {
     submitting.value = false
   }
