@@ -29,11 +29,15 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        seedUsers();
-        seedInventories();
-        seedSalaryConfigs();
-        seedSalaryFormula();
-        log.info(">>> [OriginGas Enterprise] Đã nạp thành công toàn bộ dữ liệu nền tảng với Khóa Ngoại chuẩn vào CSDL!");
+        try {
+            seedUsers();
+            seedInventories();
+            seedSalaryConfigs();
+            seedSalaryFormula();
+            log.info(">>> [OriginGas Enterprise] Đã kiểm tra và nạp thành công dữ liệu mẫu vào CSDL!");
+        } catch (Exception e) {
+            log.warn(">>> [OriginGas Enterprise] Dữ liệu mẫu đã tồn tại hoặc xảy ra cảnh báo: {}", e.getMessage());
+        }
     }
 
     private void seedUsers() {
@@ -76,15 +80,19 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedInventoryItem(String type, int full, int empty, int warning) {
-        if (!inventoryRepository.existsByContainerType(type)) {
-            Inventory item = Inventory.builder()
-                    .containerType(type)
-                    .fullQuantity(full)
-                    .emptyQuantity(empty)
-                    .warningThreshold(warning)
-                    .build();
-            inventoryRepository.save(item);
-            log.info("-> Đã nạp tồn kho mẫu cho loại: {}", type);
+        try {
+            if (inventoryRepository.findByContainerType(type).isEmpty() && !inventoryRepository.existsByContainerType(type)) {
+                Inventory item = Inventory.builder()
+                        .containerType(type)
+                        .fullQuantity(full)
+                        .emptyQuantity(empty)
+                        .warningThreshold(warning)
+                        .build();
+                inventoryRepository.save(item);
+                log.info("-> Đã nạp tồn kho mẫu cho loại: {}", type);
+            }
+        } catch (Exception ex) {
+            log.warn("-> Tồn kho cho loại '{}' đã tồn tại trong CSDL, bỏ qua.", type);
         }
     }
 
@@ -96,33 +104,41 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedSalaryConfigItem(String type, double commission, Integer threshold, Double bonus) {
-        Optional<Inventory> optInv = inventoryRepository.findByContainerType(type);
-        if (optInv.isPresent()) {
-            Inventory inv = optInv.get();
-            if (!salaryConfigRepository.existsByInventoryId(inv.getId())) {
-                SalaryConfig config = SalaryConfig.builder()
-                        .inventory(inv)
-                        .commissionPerUnit(commission)
-                        .milestoneBonusThreshold(threshold)
-                        .milestoneBonusAmount(bonus)
-                        .build();
-                salaryConfigRepository.save(config);
-                log.info("-> Đã nạp cấu hình hoa hồng liên kết khóa ngoại với kho cho: {}", type);
+        try {
+            Optional<Inventory> optInv = inventoryRepository.findByContainerType(type);
+            if (optInv.isPresent()) {
+                Inventory inv = optInv.get();
+                if (!salaryConfigRepository.existsByInventoryId(inv.getId())) {
+                    SalaryConfig config = SalaryConfig.builder()
+                            .inventory(inv)
+                            .commissionPerUnit(commission)
+                            .milestoneBonusThreshold(threshold)
+                            .milestoneBonusAmount(bonus)
+                            .build();
+                    salaryConfigRepository.save(config);
+                    log.info("-> Đã nạp cấu hình hoa hồng liên kết khóa ngoại với kho cho: {}", type);
+                }
             }
+        } catch (Exception ex) {
+            log.warn("-> Cấu hình hoa hồng cho '{}' đã tồn tại, bỏ qua.", type);
         }
     }
 
     private void seedSalaryFormula() {
-        if (salaryFormulaRepository.findByIsActiveTrue().isEmpty()) {
-            SalaryFormula formula = SalaryFormula.builder()
-                    .name("Công thức lương chuẩn OriginGas 2026")
-                    .formulaExpression("(#baseSalary / 26 * #workDays) + (#commissionTotal * #overtime) + #bonus")
-                    .isActive(true)
-                    .effectiveDate(LocalDate.of(2026, 1, 1))
-                    .description("Công thức chuẩn: (Lương cơ bản / 26 * Ngày công) + (Hoa hồng * Hệ số tăng ca) + Thưởng/Phụ cấp")
-                    .build();
-            salaryFormulaRepository.save(formula);
-            log.info("-> Đã nạp công thức tính lương SpEL chuẩn vào CSDL");
+        try {
+            if (salaryFormulaRepository.findByIsActiveTrue().isEmpty()) {
+                SalaryFormula formula = SalaryFormula.builder()
+                        .name("Công thức lương chuẩn OriginGas 2026")
+                        .formulaExpression("(#baseSalary / 26 * #workDays) + (#commissionTotal * #overtime) + #bonus")
+                        .isActive(true)
+                        .effectiveDate(LocalDate.of(2026, 1, 1))
+                        .description("Công thức chuẩn: (Lương cơ bản / 26 * Ngày công) + (Hoa hồng * Hệ số tăng ca) + Thưởng/Phụ cấp")
+                        .build();
+                salaryFormulaRepository.save(formula);
+                log.info("-> Đã nạp công thức tính lương SpEL chuẩn vào CSDL");
+            }
+        } catch (Exception ex) {
+            log.warn("-> Công thức tính lương đã tồn tại, bỏ qua.");
         }
     }
 }
