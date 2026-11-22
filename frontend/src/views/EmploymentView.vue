@@ -16,6 +16,24 @@
           class="text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg px-3 py-1.5 shadow-2xs focus:outline-none focus:border-slate-800 transition-colors cursor-pointer"
         />
 
+        <!-- Đối Soát Cuối Ca Button -->
+        <button 
+          @click="openReconciliationModal"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors"
+          title="Xem số liệu đối soát tiền mặt shipper phải bàn giao lại cho thủ quỹ két"
+        >
+          <span>📋 Đối Soát Cuối Ca</span>
+        </button>
+
+        <!-- Lịch Sử Giao Hàng Button -->
+        <button 
+          @click="openHistoryModal"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-700 hover:bg-slate-50 border border-slate-300 text-xs font-semibold rounded-lg shadow-2xs transition-colors"
+          title="Tra cứu lịch sử giao gas theo khoảng ngày"
+        >
+          <span>🕒 Lịch Sử</span>
+        </button>
+
         <!-- Action CTA -->
         <button 
           @click="openCreateModal"
@@ -400,6 +418,195 @@
         </form>
       </div>
     </div>
+
+    <!-- MODAL 1: ĐỐI SOÁT TIỀN MẶT CUỐI CA CỦA SHIPPER -->
+    <div 
+      v-if="reconciliationModal.isOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in"
+    >
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-lg overflow-hidden animate-scale-up">
+        <!-- Header -->
+        <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">📋</span>
+            <div>
+              <h3 class="text-sm font-bold">Biên Bản Đối Soát Nộp Tiền Cuối Ca</h3>
+              <p class="text-[11px] text-slate-300">Ngày: {{ selectedDate }} • {{ reconciliationModal.data?.employeeName || 'Shipper' }}</p>
+            </div>
+          </div>
+          <button @click="reconciliationModal.isOpen = false" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+        </div>
+
+        <div v-if="reconciliationModal.loading" class="p-8 text-center text-xs text-slate-500">
+          <div class="inline-block w-6 h-6 border-2 border-slate-300 border-t-slate-800 rounded-full animate-spin mb-2"></div>
+          <div>Đang tính toán số liệu đối soát...</div>
+        </div>
+
+        <div v-else class="p-5 space-y-4">
+          <!-- Main Highlight: Cash to Handover -->
+          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+            <div class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider mb-1">
+              Tiền Mặt Shipper Phải Nộp Lại Cho Két / Thủ Quỹ
+            </div>
+            <div class="text-2xl font-black text-emerald-700 font-mono tracking-tight">
+              {{ formatCurrency(reconciliationModal.data?.totalCashToHandover) }}
+            </div>
+            <div class="text-[11px] text-emerald-600 mt-1">
+              (Tổng tiền mặt thực tế đã thu từ khách hàng trong ngày hôm nay)
+            </div>
+          </div>
+
+          <!-- Breakdown Metrics Grid -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div class="text-[10px] text-slate-500 uppercase font-semibold">Tổng Số Đơn Đã Giao</div>
+              <div class="text-base font-bold text-slate-900 mt-0.5">
+                {{ reconciliationModal.data?.totalOrders || 0 }} <span class="text-xs font-normal text-slate-500">phiếu</span>
+              </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div class="text-[10px] text-slate-500 uppercase font-semibold">Tổng Bình Gas Đã Giao</div>
+              <div class="text-base font-bold text-slate-900 mt-0.5">
+                {{ reconciliationModal.data?.totalCylinders || 0 }} <span class="text-xs font-normal text-slate-500">bình</span>
+              </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div class="text-[10px] text-slate-500 uppercase font-semibold">Tổng Doanh Số Đơn</div>
+              <div class="text-base font-bold text-slate-900 mt-0.5 font-mono">
+                {{ formatCurrency(reconciliationModal.data?.totalSalesAmount) }}
+              </div>
+            </div>
+
+            <div class="p-3 bg-rose-50 rounded-xl border border-rose-200">
+              <div class="text-[10px] text-rose-600 uppercase font-semibold">Khách Chưa Trả (Ghi Nợ)</div>
+              <div class="text-base font-bold text-rose-600 mt-0.5 font-mono">
+                {{ formatCurrency(reconciliationModal.data?.totalRemainingDebt) }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+            <button 
+              @click="printReconciliation" 
+              class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg flex items-center gap-1.5"
+            >
+              <span>🖨️</span>
+              <span>In Phiếu Nộp Tiền</span>
+            </button>
+            <button 
+              @click="reconciliationModal.isOpen = false"
+              class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: TRA CỨU LỊCH SỬ GIAO HÀNG THEO KHOẢNG NGÀY -->
+    <div 
+      v-if="historyModal.isOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in"
+    >
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-up">
+        <!-- Header -->
+        <div class="p-4 bg-slate-900 text-white flex items-center justify-between flex-shrink-0">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">🕒</span>
+            <div>
+              <h3 class="text-sm font-bold">Tra Cứu Lịch Sử Báo Cáo Giao Hàng</h3>
+              <p class="text-[11px] text-slate-300">Truy vấn toàn bộ phiếu giao gas theo dải ngày</p>
+            </div>
+          </div>
+          <button @click="historyModal.isOpen = false" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="p-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center gap-3 flex-shrink-0">
+          <div class="flex items-center gap-1.5 text-xs">
+            <span class="text-slate-500 font-semibold">Từ:</span>
+            <input 
+              type="date" 
+              v-model="historyModal.fromDate" 
+              class="px-2 py-1 bg-white border border-slate-300 rounded text-xs font-semibold"
+            />
+          </div>
+          <div class="flex items-center gap-1.5 text-xs">
+            <span class="text-slate-500 font-semibold">Đến:</span>
+            <input 
+              type="date" 
+              v-model="historyModal.toDate" 
+              class="px-2 py-1 bg-white border border-slate-300 rounded text-xs font-semibold"
+            />
+          </div>
+          <button 
+            @click="fetchHistory" 
+            :disabled="historyModal.loading"
+            class="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded shadow-2xs disabled:opacity-50"
+          >
+            {{ historyModal.loading ? 'Đang tải...' : 'Lọc Dữ Liệu' }}
+          </button>
+        </div>
+
+        <!-- Content list -->
+        <div class="p-4 overflow-y-auto flex-1 space-y-2">
+          <div v-if="historyModal.loading" class="p-8 text-center text-xs text-slate-500">
+            <div class="inline-block w-6 h-6 border-2 border-slate-300 border-t-slate-800 rounded-full animate-spin mb-2"></div>
+            <div>Đang tải lịch sử giao hàng...</div>
+          </div>
+
+          <div v-else-if="historyModal.data.length === 0" class="p-8 text-center text-xs text-slate-500">
+            Không có phiếu giao hàng nào trong khoảng thời gian đã chọn.
+          </div>
+
+          <div 
+            v-else 
+            v-for="h in historyModal.data" 
+            :key="h.id"
+            class="p-3 bg-white border border-slate-200 rounded-xl hover:border-slate-300 flex items-center justify-between text-xs"
+          >
+            <div>
+              <div class="font-bold text-slate-900 flex items-center gap-2">
+                <span>{{ h.customerName }}</span>
+                <span class="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] text-slate-600 font-normal">
+                  {{ h.containerType }} (x{{ h.quantity }})
+                </span>
+              </div>
+              <div class="text-slate-500 text-[11px] mt-0.5">
+                Ngày: <span class="font-medium text-slate-700">{{ h.reportDate }}</span>
+                <span class="mx-1">•</span>
+                Shipper: <span class="font-medium text-slate-700">{{ h.employeeName || 'Nhân viên' }}</span>
+              </div>
+            </div>
+
+            <div class="text-right">
+              <div class="font-bold text-slate-900 font-mono">{{ formatCurrency(h.total) }}</div>
+              <span 
+                class="inline-block px-1.5 py-0.2 rounded text-[10px] font-semibold mt-0.5"
+                :class="h.paymentStatus === 'PAID' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'"
+              >
+                {{ h.paymentStatus === 'PAID' ? 'Đã Thanh Toán' : 'Ghi Nợ' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs flex-shrink-0">
+          <span class="text-slate-500">Tìm thấy <strong>{{ historyModal.data.length }}</strong> phiếu giao gas</span>
+          <button 
+            @click="historyModal.isOpen = false"
+            class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold rounded"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
   </EmployeeLayout>
 </template>
 
@@ -606,6 +813,59 @@ async function handleDeleteReport(id) {
       alert('Lỗi khi xóa phiếu: ' + err.message)
     }
   }
+}
+
+// State Đối Soát Cuối Ca
+const reconciliationModal = reactive({
+  isOpen: false,
+  loading: false,
+  data: null
+})
+
+// State Tra Cứu Lịch Sử Giao Hàng
+const historyModal = reactive({
+  isOpen: false,
+  loading: false,
+  fromDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  toDate: new Date().toISOString().split('T')[0],
+  data: []
+})
+
+async function openReconciliationModal() {
+  reconciliationModal.isOpen = true
+  reconciliationModal.loading = true
+  try {
+    const res = await deliveryReportService.getDailyReconciliation({ reportDate: selectedDate.value })
+    reconciliationModal.data = res?.data !== undefined ? res.data : res
+  } catch (err) {
+    console.error('Lỗi lấy đối soát cuối ca:', err)
+  } finally {
+    reconciliationModal.loading = false
+  }
+}
+
+async function openHistoryModal() {
+  historyModal.isOpen = true
+  await fetchHistory()
+}
+
+async function fetchHistory() {
+  historyModal.loading = true
+  try {
+    const res = await deliveryReportService.getDeliveryHistory({
+      fromDate: historyModal.fromDate,
+      toDate: historyModal.toDate
+    })
+    historyModal.data = res?.data !== undefined ? res.data : (Array.isArray(res) ? res : [])
+  } catch (err) {
+    console.error('Lỗi lấy lịch sử giao hàng:', err)
+  } finally {
+    historyModal.loading = false
+  }
+}
+
+function printReconciliation() {
+  window.print()
 }
 
 onMounted(() => {
