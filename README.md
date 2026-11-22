@@ -1,4 +1,4 @@
-# 🚀 ORIGINGAS ENTERPRISE — HỆ THỐNG QUẢN LÝ GIAO HÀNG & CHUỖI PHÂN PHỐI GAS
+# 🚀 POLYGAS ENTERPRISE — HỆ THỐNG QUẢN LÝ GIAO HÀNG & CHUỖI PHÂN PHỐI GAS
 
 Dự án Đồ án Tốt nghiệp được xây dựng theo **Kiến trúc Tách biệt Frontend – Backend (Decoupled Architecture / SPA + RESTful Web API)**.
 
@@ -136,5 +136,5 @@ src/main/java/poly/duantn/
 ## 📊 6. TÀI LIỆU THAM KHẢO TRONG DỰ ÁN
 
 * **Sơ đồ Thực thể Quan hệ & Kiến trúc:** Mở file `ERD_Viewer.html` trên trình duyệt.
-* **Tài liệu Đặc tả Yêu cầu Kỹ thuật:** File `SRS_OriginGas.docx`.
+* **Tài liệu Đặc tả Yêu cầu Kỹ thuật:** File `SRS_PolyGas.docx`.
 * **Kế hoạch Phân công 12 Tuần:** File `KE_HOACH_PHAN_CONG_THEO_MODULE_VA_TUAN.xlsx`.

@@ -4,7 +4,7 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
- * Lớp Exception gốc của toàn hệ thống OriginGas Enterprise
+ * Lớp Exception gốc của toàn hệ thống PolyGas Enterprise
  */
 @Getter
 public class AppException extends RuntimeException {

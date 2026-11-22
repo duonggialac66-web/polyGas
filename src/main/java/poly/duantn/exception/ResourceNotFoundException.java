@@ -14,7 +14,7 @@ public class ResourceNotFoundException extends AppException {
     }
 
     public ResourceNotFoundException(String resourceName, String fieldName, Object fieldValue) {
-        super(String.format("Không tìm thấy %s với %s = '%s'", resourceName, fieldName, fieldValue),
+        super(String.format("Không tìm thấy %s với %s: '%s'", resourceName, fieldName, fieldValue),
                 HttpStatus.NOT_FOUND);
     }
 }

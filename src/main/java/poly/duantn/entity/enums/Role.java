@@ -1,7 +1,7 @@
 package poly.duantn.entity.enums;
 
 /**
- * Vai trò / Quyền hạn của tài khoản trong hệ thống OriginGas Enterprise
+ * Vai trò / Quyền hạn của tài khoản trong hệ thống PolyGas Enterprise
  */
 public enum Role {
 

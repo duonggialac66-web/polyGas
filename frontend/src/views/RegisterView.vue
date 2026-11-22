@@ -4,9 +4,9 @@
       <!-- Enterprise Brand Header -->
       <div class="text-center mb-6">
         <div class="inline-flex items-center justify-center w-12 h-12 bg-slate-900 text-white rounded-xl mb-3 shadow-sm font-black text-lg tracking-wider">
-          OG
+          PG
         </div>
-        <h1 class="text-xl font-bold tracking-tight text-slate-900">ORIGINGAS ENTERPRISE</h1>
+        <h1 class="text-xl font-bold tracking-tight text-slate-900">POLYGAS ENTERPRISE</h1>
         <p class="text-xs text-slate-500 mt-1 font-medium">Đăng Ký Tài Khoản Vận Hành Doanh Nghiệp</p>
       </div>
 
@@ -196,7 +196,7 @@
 
       <!-- Footer Info -->
       <p class="text-center text-slate-400 text-[11px] mt-6 font-mono">
-        © 2026 OriginGas Enterprise System. All rights reserved.
+        © 2026 PolyGas Enterprise System. All rights reserved.
       </p>
     </div>
   </div>

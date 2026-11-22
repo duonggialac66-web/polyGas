@@ -2,20 +2,61 @@
   <div class="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-slate-800 selection:text-white">
     <!-- Corporate Top Navigation Bar -->
     <header class="sticky top-0 z-30 bg-white border-b border-slate-200 px-4 sm:px-8 py-3">
-      <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="max-w-7xl mx-auto flex items-center justify-between">
         <!-- Logo & Enterprise Brand -->
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white font-black text-sm tracking-wider">
-            OG
+            PG
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <span class="text-sm font-bold tracking-tight text-slate-900">PolyGAS</span>
+              <span class="text-sm font-bold tracking-tight text-slate-900">PolyGas</span>
               <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wider uppercase bg-slate-100 text-slate-600 border border-slate-200">Enterprise</span>
             </div>
-            <p class="text-[11px] text-slate-500 font-medium">Hệ Thống Quản Trị Vận Hành</p>
+            <p class="text-[11px] text-slate-500 font-medium">Hệ Thống Quản Trị Vận Hành Gas</p>
           </div>
         </div>
+
+        <!-- Center: Quick Navigation for Desktop/Admin -->
+        <nav class="hidden md:flex items-center gap-1 text-xs font-semibold text-slate-600">
+          <template v-if="isAdmin">
+            <router-link to="/dashboard" class="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-100 transition-colors" active-class="text-slate-900 bg-slate-100 font-bold">
+              Tổng Quan
+            </router-link>
+            <router-link to="/inventory" class="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-100 transition-colors" active-class="text-slate-900 bg-slate-100 font-bold">
+              Kho Gas
+            </router-link>
+            <router-link to="/admin/view_report" class="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-100 transition-colors" active-class="text-slate-900 bg-slate-100 font-bold">
+              Đối Soát Thu Chi
+            </router-link>
+            <router-link to="/users" class="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-100 transition-colors" active-class="text-slate-900 bg-slate-100 font-bold">
+              Nhân Sự
+            </router-link>
+            <router-link to="/employment" class="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-100 transition-colors" active-class="text-slate-900 bg-slate-100 font-bold">
+              Giao Hàng
+            </router-link>
+            <router-link to="/customers" class="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-100 transition-colors" active-class="text-slate-900 bg-slate-100 font-bold">
+              Khách Hàng
+            </router-link>
+            <router-link to="/expenses" class="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-100 transition-colors" active-class="text-slate-900 bg-slate-100 font-bold">
+              Chi Phí
+            </router-link>
+          </template>
+          <template v-else>
+            <router-link to="/employment" class="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-100 transition-colors" active-class="text-slate-900 bg-slate-100 font-bold">
+              Báo Cáo Giao Gas
+            </router-link>
+            <router-link to="/customers" class="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-100 transition-colors" active-class="text-slate-900 bg-slate-100 font-bold">
+              Danh Bạ Khách
+            </router-link>
+            <router-link to="/debts" class="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-100 transition-colors" active-class="text-slate-900 bg-slate-100 font-bold">
+              Sổ Nợ Cần Thu
+            </router-link>
+            <router-link to="/expenses" class="px-3 py-1.5 rounded-md hover:text-slate-900 hover:bg-slate-100 transition-colors" active-class="text-slate-900 bg-slate-100 font-bold">
+              Chi Phí Vận Hành
+            </router-link>
+          </template>
+        </nav>
 
         <!-- Right: Status & User Info -->
         <div class="flex items-center gap-4">
@@ -27,7 +68,7 @@
               : 'bg-amber-50 text-amber-700 border-amber-200'"
           >
             <span class="w-1.5 h-1.5 rounded-full" :class="isBackendConnected ? 'bg-emerald-600' : 'bg-amber-500'"></span>
-            <span>{{ isBackendConnected ? 'Máy chủ: Kết nối' : 'Máy chủ: Ngoại tuyến (Demo)' }}</span>
+            <span>{{ isBackendConnected ? 'Máy chủ: Đang hoạt động' : 'Máy chủ: Ngoại tuyến' }}</span>
           </div>
 
           <!-- Refresh Button -->
@@ -43,7 +84,7 @@
 
           <!-- User Profile & Logout -->
           <div class="flex items-center gap-2.5 pl-3 border-l border-slate-200">
-            <div class="w-7 h-7 rounded-md bg-slate-100 border border-slate-300 text-slate-700 flex items-center justify-center font-bold text-xs">
+            <div class="w-7 h-7 rounded-md bg-slate-900 text-white flex items-center justify-center font-bold text-xs">
               {{ userInitial }}
             </div>
             <div class="hidden sm:block text-left">
@@ -64,12 +105,12 @@
       </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-8 py-6 pb-24">
+    <!-- Main Workspace -->
+    <main class="flex-1 w-full mx-auto px-4 sm:px-8 py-6 pb-24" :class="wide ? 'max-w-7xl' : 'max-w-6xl'">
       <slot />
     </main>
 
-    <!-- Professional Bottom Navigation -->
+    <!-- Professional Bottom Navigation for Mobile / Quick Access -->
     <BottomNav :debt-count="debtCount" />
   </div>
 </template>
@@ -88,6 +129,10 @@ defineProps({
   debtCount: {
     type: Number,
     default: 0
+  },
+  wide: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -97,6 +142,8 @@ const router = useRouter()
 
 const userName = computed(() => localStorage.getItem('name') || 'Nhân viên')
 const userRole = computed(() => localStorage.getItem('role') || 'EMPLOYEE')
+const isAdmin = computed(() => userRole.value === 'ADMIN' || userRole.value === 'ROLE_ADMIN')
+
 const userInitial = computed(() => {
   const name = userName.value.trim()
   if (!name) return 'NV'

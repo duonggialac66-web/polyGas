@@ -24,11 +24,21 @@ import java.util.UUID;
 public class DeliveryReportRequest {
 
     /**
+     * ID khách hàng trong danh bạ (cho phép null nếu là khách vãng lai)
+     */
+    private UUID customerId;
+
+    /**
      * Tên khách hàng
      */
     @NotBlank(message = "Tên khách hàng không được để trống")
     @Size(min = 2, max = 255, message = "Tên khách hàng phải từ 2 đến 255 ký tự")
     private String customerName;
+
+    /**
+     * ID loại bình gas trong kho (nếu có)
+     */
+    private UUID inventoryId;
 
     /**
      * Loại bình gas (VD: "Bình 12kg Xám", "Bình 12kg Đỏ", "Bình 45kg Công Nghiệp", "Gas Lon Mini")
@@ -56,6 +66,18 @@ public class DeliveryReportRequest {
      * Thành tiền (quantity * unitPrice)
      */
     private Double total;
+
+    /**
+     * Số tiền thực thu từ khách
+     */
+    @Builder.Default
+    private Double actualReceived = 0.0;
+
+    /**
+     * Số lượng vỏ bình khách đã trả lại
+     */
+    @Builder.Default
+    private Integer returnedShells = 0;
 
     /**
      * Ghi chú giao hàng

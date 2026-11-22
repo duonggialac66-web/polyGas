@@ -6,13 +6,8 @@ export const debtService = {
    * GET /api/v1/debts?customer=...&employeeId=...
    */
   async getDebts(params = {}) {
-    try {
-      const res = await apiClient.get('/debts', { params })
-      return res.data || []
-    } catch (err) {
-      console.warn('Lỗi gọi API /debts, fallback sang mock/empty:', err.message)
-      return []
-    }
+    const res = await apiClient.get('/debts', { params })
+    return res?.data !== undefined ? res.data : (Array.isArray(res) ? res : [])
   },
 
   /**
@@ -20,6 +15,9 @@ export const debtService = {
    * POST /api/v1/debts/{reportId}/pay
    */
   async payDebt(reportId, data) {
-    return apiClient.post(`/debts/${reportId}/pay`, data)
+    const res = await apiClient.post(`/debts/${reportId}/pay`, data)
+    return res?.data !== undefined ? res.data : res
   }
 }
+
+export default debtService

@@ -14,16 +14,48 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import poly.duantn.dto.ApiResponse;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Bộ xử lý ngoại lệ toàn cục cho toàn bộ hệ thống RESTful API
- * Đảm bảo mọi lỗi (Validation, JWT, Nghiệp vụ, 404, 500) đều trả về chuẩn ApiResponse<T>
+ * Đảm bảo mọi lỗi (Validation, JWT, Nghiệp vụ, 404, 500) đều trả về chuẩn ApiResponse
  */
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    /**
+     * Bắt lỗi Validation form (@Valid, @NotNull, @NotBlank,...)
+     * Trả về map field -> message để frontend hiển thị lỗi dưới từng ô input
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        String firstMessage = "Dữ liệu nhập vào không hợp lệ";
+
+        if (ex.getBindingResult() != null && ex.getBindingResult().hasFieldErrors()) {
+            for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            FieldError firstError = ex.getBindingResult().getFieldError();
+            if (firstError != null && firstError.getDefaultMessage() != null) {
+                firstMessage = firstError.getDefaultMessage();
+            }
+        }
+
+        log.warn("Form validation errors: {}", errors);
+
+        ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
+                .success(false)
+                .message(firstMessage)
+                .data(errors)
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
 
     /**
      * Bắt lỗi BadRequestException (400)
@@ -43,25 +75,6 @@ public class GlobalExceptionHandler {
         log.warn("ResourceNotFoundException: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.error(ex.getMessage()));
-    }
-
-    /**
-     * Bắt lỗi Validation form (@Valid, @NotNull, @NotBlank,...)
-     * Trả về map field -> message để frontend hiển thị lỗi dưới từng ô input
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-            errors.put(error.getField(), error.getDefaultMessage());
-        }
-        log.warn("Form validation errors: {}", errors);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.<Map<String, String>>builder()
-                        .success(false)
-                        .message("Dữ liệu nhập vào không hợp lệ")
-                        .data(errors)
-                        .build());
     }
 
     /**
