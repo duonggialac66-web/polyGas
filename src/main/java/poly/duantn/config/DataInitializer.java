@@ -2,9 +2,12 @@ package poly.duantn.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import poly.duantn.entity.*;
 import poly.duantn.entity.enums.PaymentStatus;
 import poly.duantn.entity.enums.Role;
@@ -15,6 +18,11 @@ import poly.duantn.util.NameHashUtil;
 import java.time.LocalDate;
 import java.util.Optional;
 
+/**
+ * Lớp khởi tạo & đồng bộ dữ liệu mẫu ban đầu cho hệ thống PolyGas Enterprise
+ * Hỗ trợ tự động chuyển đổi các cột VARCHAR cũ sang NVARCHAR trên SQL Server,
+ * xóa sạch dữ liệu lỗi font và tái nạp 100% dữ liệu tiếng Việt chuẩn có dấu.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -27,11 +35,26 @@ public class DataInitializer implements CommandLineRunner {
     private final CustomerRepository customerRepository;
     private final DeliveryReportRepository deliveryReportRepository;
     private final ExpenseRepository expenseRepository;
+    private final MonthlySalaryInputRepository monthlySalaryInputRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JdbcTemplate jdbcTemplate;
+
+    @Value("${app.data.reset-on-startup:false}")
+    private boolean resetOnStartup;
 
     @Override
+    @Transactional
     public void run(String... args) throws Exception {
         try {
+            // Bước 1: Ép SQL Server chuyển đổi các cột còn là VARCHAR sang NVARCHAR
+            alterColumnsToNvarchar();
+
+            // Bước 2: Kiểm tra cờ resetOnStartup hoặc dữ liệu cũ bị lỗi font để dọn dẹp
+            if (resetOnStartup || isOldDataCorrupted()) {
+                log.info(">>> [PolyGas] Phát hiện dữ liệu cũ bị lỗi font hoặc cờ reset=true. Bắt đầu xóa sạch dữ liệu cũ...");
+                cleanOldData();
+            }
+
             seedUsers();
             seedInventories();
             seedSalaryConfigs();
@@ -39,9 +62,77 @@ public class DataInitializer implements CommandLineRunner {
             seedCustomers();
             seedDeliveryReports();
             seedExpenses();
-            log.info(">>> [PolyGas Enterprise] Đã kiểm tra và nạp thành công 100% dữ liệu thật vào CSDL SQL Server!");
+
+            log.info(">>> [PolyGas Enterprise] Hoàn tất nạp 100% dữ liệu mới tiếng Việt có dấu chuẩn NVARCHAR vào SQL Server!");
         } catch (Exception e) {
-            log.warn(">>> [PolyGas Enterprise] Dữ liệu đã tồn tại hoặc xảy ra cảnh báo: {}", e.getMessage());
+            log.error(">>> [PolyGas Enterprise] Lỗi trong quá trình khởi tạo dữ liệu: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Tự động chuyển đổi các cột còn mang kiểu VARCHAR sang NVARCHAR trực tiếp trên SQL Server
+     */
+    private void alterColumnsToNvarchar() {
+        try {
+            log.info("-> Đang kiểm tra và chuyển đổi các cột sang NVARCHAR trong CSDL...");
+            // 1. users.name
+            jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN name NVARCHAR(255) NOT NULL");
+            // 2. customers.name & address
+            jdbcTemplate.execute("ALTER TABLE customers ALTER COLUMN name NVARCHAR(255) NOT NULL");
+            jdbcTemplate.execute("ALTER TABLE customers ALTER COLUMN address NVARCHAR(500) NULL");
+            // 3. delivery_reports.customer_name
+            jdbcTemplate.execute("ALTER TABLE delivery_reports ALTER COLUMN customer_name NVARCHAR(255) NOT NULL");
+            // 4. expenses.description
+            jdbcTemplate.execute("ALTER TABLE expenses ALTER COLUMN description NVARCHAR(500) NOT NULL");
+            // 5. salary_formulas.name & description
+            jdbcTemplate.execute("ALTER TABLE salary_formulas ALTER COLUMN name NVARCHAR(255) NOT NULL");
+            jdbcTemplate.execute("ALTER TABLE salary_formulas ALTER COLUMN description NVARCHAR(1000) NULL");
+
+            // 6. inventories.container_type (xử lý drop constraint nếu có rồi alter và re-add)
+            String alterInventorySql = 
+                "DECLARE @cName NVARCHAR(200); " +
+                "SELECT @cName = name FROM sys.key_constraints WHERE parent_object_id = OBJECT_ID('inventories') AND type = 'UQ'; " +
+                "IF @cName IS NOT NULL EXEC('ALTER TABLE inventories DROP CONSTRAINT ' + @cName); " +
+                "ALTER TABLE inventories ALTER COLUMN container_type NVARCHAR(100) NOT NULL; " +
+                "IF NOT EXISTS (SELECT * FROM sys.key_constraints WHERE parent_object_id = OBJECT_ID('inventories') AND type = 'UQ') " +
+                "    ALTER TABLE inventories ADD CONSTRAINT UQ_inventories_container_type UNIQUE (container_type);";
+            jdbcTemplate.execute(alterInventorySql);
+
+            log.info("-> Đã chuyển đổi thành công các cột sang kiểu dữ liệu NVARCHAR!");
+        } catch (Exception ex) {
+            log.warn("-> Cảnh báo chuyển đổi cột sang NVARCHAR (có thể bảng chưa tạo hoặc đã là NVARCHAR): {}", ex.getMessage());
+        }
+    }
+
+    /**
+     * Kiểm tra xem dữ liệu trong CSDL có bị lỗi font (chứa dấu '?' hoặc tên cũ OriginGas) hay không
+     */
+    private boolean isOldDataCorrupted() {
+        boolean corruptedUser = userRepository.findAll().stream()
+                .anyMatch(u -> (u.getName() != null && (u.getName().contains("?") || u.getName().contains("OriginGas"))));
+        boolean corruptedInventory = inventoryRepository.findAll().stream()
+                .anyMatch(i -> (i.getContainerType() != null && i.getContainerType().contains("?")));
+        boolean corruptedFormula = salaryFormulaRepository.findAll().stream()
+                .anyMatch(f -> (f.getName() != null && (f.getName().contains("?") || f.getName().contains("OriginGas"))));
+        return corruptedUser || corruptedInventory || corruptedFormula;
+    }
+
+    /**
+     * Xóa sạch dữ liệu cũ theo đúng thứ tự ràng buộc khóa ngoại (Foreign Key Constraints)
+     */
+    private void cleanOldData() {
+        try {
+            monthlySalaryInputRepository.deleteAllInBatch();
+            deliveryReportRepository.deleteAllInBatch();
+            expenseRepository.deleteAllInBatch();
+            salaryConfigRepository.deleteAllInBatch();
+            salaryFormulaRepository.deleteAllInBatch();
+            customerRepository.deleteAllInBatch();
+            inventoryRepository.deleteAllInBatch();
+            userRepository.deleteAllInBatch();
+            log.info("-> Đã xóa sạch toàn bộ các bảng dữ liệu cũ thành công!");
+        } catch (Exception ex) {
+            log.warn("-> Cảnh báo khi dọn dẹp dữ liệu cũ: {}", ex.getMessage());
         }
     }
 
@@ -59,7 +150,7 @@ public class DataInitializer implements CommandLineRunner {
                         .startDate(LocalDate.of(2026, 1, 1))
                         .build();
                 userRepository.save(admin);
-                log.info("-> Đã khởi tạo tài khoản Quản trị viên mặc định: admin / 123456");
+                log.info("-> Đã tạo tài khoản Quản trị viên: admin / 123456 (Quản trị viên PolyGas)");
             }
 
             if (!userRepository.existsByUsername("shipper01")) {
@@ -74,16 +165,45 @@ public class DataInitializer implements CommandLineRunner {
                         .startDate(LocalDate.of(2026, 2, 1))
                         .build();
                 userRepository.save(shipper);
-                log.info("-> Đã khởi tạo tài khoản Nhân viên giao gas mẫu: shipper01 / 123456");
+                log.info("-> Đã tạo tài khoản Shipper 01: shipper01 / 123456 (Nguyễn Văn Giao)");
+            }
+
+            if (!userRepository.existsByUsername("shipper02")) {
+                User shipper2 = User.builder()
+                        .username("shipper02")
+                        .password(passwordEncoder.encode("123456"))
+                        .name("Trần Văn Tốc")
+                        .role(Role.EMPLOYEE)
+                        .status(UserStatus.ACTIVE)
+                        .phone("0933445566")
+                        .baseSalary(6800000.0)
+                        .startDate(LocalDate.of(2026, 3, 1))
+                        .build();
+                userRepository.save(shipper2);
+                log.info("-> Đã tạo tài khoản Shipper 02: shipper02 / 123456 (Trần Văn Tốc)");
+            }
+
+            if (!userRepository.existsByUsername("accountant01")) {
+                User accountant = User.builder()
+                        .username("accountant01")
+                        .password(passwordEncoder.encode("123456"))
+                        .name("Trần Thị Hạnh")
+                        .role(Role.ADMIN)
+                        .status(UserStatus.ACTIVE)
+                        .phone("0912345678")
+                        .baseSalary(10000000.0)
+                        .startDate(LocalDate.of(2026, 2, 15))
+                        .build();
+                userRepository.save(accountant);
+                log.info("-> Đã tạo tài khoản Kế toán: accountant01 / 123456 (Trần Thị Hạnh)");
             }
         } catch (Exception ex) {
-            log.warn("-> Bỏ qua nạp users (đã tồn tại hoặc trùng lặp): {}", ex.getMessage());
+            log.warn("-> Lỗi tạo users: {}", ex.getMessage());
         }
     }
 
     private void seedInventories() {
         if (inventoryRepository.count() > 0) {
-            log.info("-> Bảng inventories đã có dữ liệu trong CSDL, bỏ qua seed.");
             return;
         }
 
@@ -103,16 +223,15 @@ public class DataInitializer implements CommandLineRunner {
                         .warningThreshold(warning)
                         .build();
                 inventoryRepository.save(item);
-                log.info("-> Đã nạp tồn kho mẫu cho loại: {}", type);
+                log.info("-> Đã nạp kho gas chuẩn: {} (Đầy: {}, Vỏ: {})", type, full, empty);
             }
         } catch (Exception ex) {
-            log.warn("-> Tồn kho cho loại '{}' đã tồn tại trong CSDL, bỏ qua.", type);
+            log.warn("-> Lỗi tạo kho cho '{}': {}", type, ex.getMessage());
         }
     }
 
     private void seedSalaryConfigs() {
         if (salaryConfigRepository.count() > 0) {
-            log.info("-> Bảng salary_configs đã có dữ liệu trong CSDL, bỏ qua seed.");
             return;
         }
 
@@ -135,11 +254,11 @@ public class DataInitializer implements CommandLineRunner {
                             .milestoneBonusAmount(bonus)
                             .build();
                     salaryConfigRepository.save(config);
-                    log.info("-> Đã nạp cấu hình hoa hồng liên kết khóa ngoại với kho cho: {}", type);
+                    log.info("-> Đã cấu hình hoa hồng cho: {} ({} ₫/bình)", type, commission);
                 }
             }
         } catch (Exception ex) {
-            log.warn("-> Cấu hình hoa hồng cho '{}' đã tồn tại, bỏ qua.", type);
+            log.warn("-> Lỗi cấu hình hoa hồng cho '{}': {}", type, ex.getMessage());
         }
     }
 
@@ -154,10 +273,10 @@ public class DataInitializer implements CommandLineRunner {
                         .description("Công thức chuẩn: (Lương cơ bản / 26 * Ngày công) + (Hoa hồng * Hệ số tăng ca) + Thưởng/Phụ cấp")
                         .build();
                 salaryFormulaRepository.save(formula);
-                log.info("-> Đã nạp công thức tính lương SpEL chuẩn vào CSDL");
+                log.info("-> Đã nạp công thức tính lương SpEL chuẩn: {}", formula.getName());
             }
         } catch (Exception ex) {
-            log.warn("-> Công thức tính lương đã tồn tại, bỏ qua.");
+            log.warn("-> Lỗi nạp công thức tính lương: {}", ex.getMessage());
         }
     }
 
@@ -186,7 +305,7 @@ public class DataInitializer implements CommandLineRunner {
                         .notes(notes)
                         .build();
                 customerRepository.save(c);
-                log.info("-> Đã nạp khách hàng thật: {}", name);
+                log.info("-> Đã nạp khách hàng: {} ({})", name, address);
             }
         } catch (Exception e) {
             log.warn("-> Lỗi nạp khách hàng '{}': {}", name, e.getMessage());
@@ -256,7 +375,7 @@ public class DataInitializer implements CommandLineRunner {
                     .notes("Khách thanh toán qua mã QR")
                     .build());
         }
-        log.info("-> Đã nạp các phiếu báo cáo giao gas thật trong ngày vào CSDL");
+        log.info("-> Đã nạp các phiếu báo cáo giao gas trong ngày vào CSDL");
     }
 
     private void seedExpenses() {
