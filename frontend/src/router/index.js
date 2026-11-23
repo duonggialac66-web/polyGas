@@ -2,11 +2,30 @@ import { createRouter, createWebHistory } from 'vue-router'
 import EmploymentView from '../views/EmploymentView.vue'
 import CustomersView from '../views/CustomersView.vue'
 import DebtsView from '../views/DebtsView.vue'
+import SalaryUserManagementView from '../views/SalaryUserManagementView.vue'
 
 const routes = [
   {
     path: '/',
-    redirect: '/employment'
+    redirect: '/salary'
+  },
+  {
+    path: '/salary',
+    name: 'SalaryManagement',
+    component: SalaryUserManagementView,
+    meta: {
+      title: 'Quản Lý Lương & SpEL Engine - OriginGas',
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/users',
+    name: 'UserManagement',
+    component: SalaryUserManagementView,
+    meta: {
+      title: 'Quản Lý Nhân Sự & Lương Cơ Bản - OriginGas',
+      requiresAuth: true
+    }
   },
   {
     path: '/employment',
@@ -35,10 +54,10 @@ const routes = [
       requiresAuth: true
     }
   },
-  // Bắt tất cả các route khác chuyển về /employment
+  // Bắt tất cả các route khác chuyển về /salary
   {
     path: '/:pathMatch(.*)*',
-    redirect: '/employment'
+    redirect: '/salary'
   }
 ]
 
