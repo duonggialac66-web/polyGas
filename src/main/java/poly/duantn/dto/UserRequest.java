@@ -28,4 +28,3 @@ public class UserRequest {
     private Double baseSalary;
     private String avatarUrl;
 }
-

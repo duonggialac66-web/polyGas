@@ -19,6 +19,11 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
     List<Expense> findByEmployeeIdAndExpenseDate(UUID employeeId, LocalDate expenseDate);
 
     /**
+     * Lấy toàn bộ danh sách chi phí của toàn công ty theo ngày
+     */
+    List<Expense> findByExpenseDate(LocalDate expenseDate);
+
+    /**
      * Lấy danh sách chi phí của nhân viên trong khoảng thời gian
      */
     List<Expense> findByEmployeeIdAndExpenseDateBetween(UUID employeeId, LocalDate startDate, LocalDate endDate);
@@ -36,4 +41,3 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
     Double sumAmountByEmployeeAndDate(@Param("employeeId") UUID employeeId,
                                       @Param("expenseDate") LocalDate expenseDate);
 }
-

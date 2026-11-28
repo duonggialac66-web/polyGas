@@ -20,7 +20,7 @@ public class SalaryFormula {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, columnDefinition = "NVARCHAR(255)")
     private String name;
 
     @Column(name = "formula_expression", nullable = false, length = 1000)
@@ -33,7 +33,7 @@ public class SalaryFormula {
     @Column(name = "effective_date", nullable = false)
     private LocalDate effectiveDate;
 
-    @Column(name = "description", length = 1000)
+    @Column(name = "description", length = 1000, columnDefinition = "NVARCHAR(1000)")
     private String description;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -59,4 +59,3 @@ public class SalaryFormula {
         this.updatedAt = LocalDateTime.now();
     }
 }
-

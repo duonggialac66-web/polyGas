@@ -29,7 +29,7 @@ public class Expense {
     @Column(name = "expense_date", nullable = false)
     private LocalDate expenseDate;
 
-    @Column(name = "description", nullable = false, length = 500)
+    @Column(name = "description", nullable = false, length = 500, columnDefinition = "NVARCHAR(500)")
     private String description;
 
     @Column(name = "amount", nullable = false)
@@ -62,4 +62,3 @@ public class Expense {
         this.updatedAt = LocalDateTime.now();
     }
 }
-

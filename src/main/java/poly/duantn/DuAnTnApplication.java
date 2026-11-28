@@ -10,4 +10,3 @@ public class DuAnTnApplication {
         SpringApplication.run(DuAnTnApplication.class, args);
     }
 }
-

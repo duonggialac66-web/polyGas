@@ -17,6 +17,11 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
     Optional<Customer> findByNameHash(String nameHash);
 
     /**
+     * Tìm kiếm khách hàng theo tiền tố mã băm chuẩn hóa tên
+     */
+    List<Customer> findByNameHashStartingWith(String nameHash);
+
+    /**
      * Kiểm tra tên khách hàng đã tồn tại hay chưa (chống tạo trùng)
      */
     boolean existsByNameHash(String nameHash);
@@ -36,4 +41,3 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
      */
     List<Customer> findByPhoneContainingOrAddressContainingIgnoreCase(String phone, String address);
 }
-

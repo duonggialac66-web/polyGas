@@ -42,7 +42,7 @@ public class DeliveryReport {
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
-    @Column(name = "customer_name", nullable = false)
+    @Column(name = "customer_name", nullable = false, columnDefinition = "NVARCHAR(255)")
     private String customerName;
 
     /**

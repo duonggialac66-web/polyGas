@@ -77,4 +77,3 @@ public class MonthlySalaryInput {
         this.updatedAt = LocalDateTime.now();
     }
 }
-
